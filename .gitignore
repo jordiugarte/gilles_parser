@@ -1,0 +1,4 @@
+*.class
+*.java~
+*.jar
+/src/com/gilles/LexicalAnalyzer.java
