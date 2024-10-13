@@ -2,3 +2,7 @@
 *.java~
 *.jar
 /src/LexicalAnalyzer.java
+
+# IntelliJ IDEA
+.idea/
+*.iml
