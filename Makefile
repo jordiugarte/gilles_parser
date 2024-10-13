@@ -4,14 +4,25 @@
 JAVAC = javac
 JFLEX = jflex
 JAR = jar
-SRC_DIR = src/
-PACKAGE_DIR = ${SRC_DIR}com/gilles/
-DIST_DIR = dist
-MAIN_CLASS = ${SRC_DIR}Main  # Update this if your main class is different
-JAR_NAME = $(DIST_DIR)/part1.jar
+PWD = $(shell pwd)
+SRC_DIR = src
+PACKAGE_DIR = ${SRC_DIR} # Unused
+DIST_DIR = ${PWD}/dist
+MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
+JAR_NAME = $(DIST_DIR)/parser.jar
+TEST_DIR = ${PWD}/test
 
-all:
-	${JFLEX} ./${PACKAGE_DIR}LexicalAnalyzer.flex
-	${JAVAC} ./${PACKAGE_DIR}LexicalUnit.java
-	${JAVAC} ./${PACKAGE_DIR}Main.java
-	${JAR} cvfm ${JAR_NAME} ${PACKAGE_DIR}/manifest.txt ${PACKAGE_DIR}*.class
+all: build jar
+
+build:
+	${JFLEX} ${SRC_DIR}/LexicalAnalyzer.flex
+	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/LexicalAnalyzer.java
+	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/Main.java
+
+jar:
+	${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.txt -C ${SRC_DIR} .
+
+.PHONY: all build jar test
+
+test:
+	@java -jar ${JAR_NAME} ${TEST_DIR}/Euclid.gls
