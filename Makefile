@@ -9,7 +9,7 @@ SRC_DIR = src
 PACKAGE_DIR = ${SRC_DIR} # Unused
 DIST_DIR = ${PWD}/dist
 MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
-JAR_NAME = $(DIST_DIR)/parser.jar
+JAR_NAME = $(DIST_DIR)/part1.jar
 TEST_DIR = ${PWD}/test
 
 all: build jar
