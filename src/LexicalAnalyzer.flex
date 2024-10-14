@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Map;
+
 %%
 
 %class LexicalAnalyzer
@@ -7,8 +10,21 @@
 %type Symbol
 %standalone
 
+%{
+    public static HashMap<String, Integer> variables = new HashMap<>();
+    public static String currentVar = "";
+
+    public void printSymbolTable() {
+        System.out.println("\nVariables");
+        for (Map.Entry<String, Integer> entry : variables.entrySet()) {
+            System.out.println(entry.getKey() + "\t" + entry.getValue());
+        }
+    }
+%}
+
 // Return value of the program
 %eofval{
+    printSymbolTable();
 	return new Symbol(LexicalUnit.EOS, yyline, yycolumn);
 %eofval}
 
@@ -51,40 +67,54 @@ ShortComment = "\$"[^\n]*
   "OUT"                  { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
   "IF"                   { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
   "WHILE"                { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
-  {VarName}              { System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext())); }
+  {VarName}              {
+                            if (!variables.containsKey(yytext())) {
+                                variables.put(yytext(), yyline+1);
+                            }
+                            System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+                         }
   "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
   ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
 }
 
 /* Conditionals and loops */
 <CONDITION> {
-"THEN"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
-"ELSE"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
-"REPEAT"               { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext())); }
-"END"                  { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.END, yyline, yycolumn, yytext())); }
+  "THEN"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
+  "ELSE"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
+  "REPEAT"               { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext())); }
+  "END"                  { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.END, yyline, yycolumn, yytext())); }
   {Whitespace}           { /* Ignore whitespace */ }
   {Number}               { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
-  {VarName}              { System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext())); }
+  {VarName}              {
+                            if (!variables.containsKey(yytext())) {
+                                variables.put(yytext(), yyline+1);
+                            }
+                            System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+                         }
   "=="                   { System.out.println(new Symbol(LexicalUnit.EQUAL, yyline, yycolumn, yytext())); }
   "<="                   { System.out.println(new Symbol(LexicalUnit.SMALEQ, yyline, yycolumn, yytext())); }
   "<"                    { System.out.println(new Symbol(LexicalUnit.SMALLER, yyline, yycolumn, yytext())); }
-  "|"                  { System.out.println(new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext())); }
+  "|"                    { System.out.println(new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext())); }
   "->"                   { System.out.println(new Symbol(LexicalUnit.IMPLIES, yyline, yycolumn, yytext())); }
-  "("                  { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                  { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-
+  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
   ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
-  "{"                  { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
-  "}"                  { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
+  "{"                    { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
+  "}"                    { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
 
 }
 
 /* Input/Output instructions */
 <INPUT_OUTPUT> {
   {Whitespace}           { /* Ignore whitespace */ }
-  "("                  { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                  { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-  {VarName}              { System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext())); }
+  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  {VarName}              {
+                            if (!variables.containsKey(yytext())) {
+                                variables.put(yytext(), yyline+1);
+                            }
+                            System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+                         }
   ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 
@@ -92,13 +122,18 @@ ShortComment = "\$"[^\n]*
 <ARITHMETIC> {
   {Whitespace}           { /* Ignore whitespace */ }
   {Number}               { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
-  {VarName}              { System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext())); }
+  {VarName}              {
+                            if (!variables.containsKey(yytext())) {
+                                variables.put(yytext(), yyline+1);
+                            }
+                            System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+                         }
   "\\+"                  { System.out.println(new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext())); }
   "-"                    { System.out.println(new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext())); }
   "\\*"                  { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
   "/"                    { System.out.println(new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext())); }
-  "("                  { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                  { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
   ":"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 
@@ -107,5 +142,5 @@ ShortComment = "\$"[^\n]*
   {Whitespace}           { /* Ignore whitespace */ }
   {Comment}              { /* Ignore comments */ }
   {ShortComment}         { /* Ignore short comments */ }
-  .                      { throw new Error("Unrecognized character at line " + (yyline + 1) + ", column " + (yycolumn + 1) + ": '" + yytext() + "'"); }
+  .                      { throw new Error("Unknown symbol detected " + (yyline + 1) + ", column " + (yycolumn + 1) + ": '" + yytext() + "'"); }
 }
