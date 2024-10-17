@@ -27,8 +27,8 @@
 		\vspace{1.5cm}
 		
 		\Large
-		\textbf{Sahay Siddharth} \\
-		\textbf{Ugarte Jordi}		
+		\textbf{Siddharth SAHAY} \\
+		\textbf{Jordi UGARTE}		
 		
 		\vfill
 		
@@ -46,16 +46,32 @@
 	
 	% Abstract
 	\begin{abstract}
-		This project involves designing a compiler for the Genial Imperative Language for Learning and the Enlightenment of Students (GILLES). The grammar of the language is defined, with reserved keywords, program names, variable names, and numerical constants specified through lexical rules. Program names start with uppercase letters, while variable names begin with lowercase letters, both being case-sensitive. Integral numerical constants consist solely of digits. GILLES supports two types of comments: short comments starting with the dollar sign (\$) and long comments enclosed by double exclamation marks (!!). These comments are ignored by the scanner and are not transmitted to the parser.
+		This project involves designing and developing a compiler for the language Professor Gilles GEERAERTS implied for the instructions for this project. This language is called the Genial Imperative Language for Learning and the Enlightenment of Students (GILLES). Its grammar is stated in Table 1.\\ It is defined with reserved keywords, program names, variable names, and numerical constants specified through lexical rules. Program names start with uppercase letters, while variable names begin with lowercase letters, both being case-sensitive. Integral numerical constants consist solely of digits. GILLES supports two types of comments: short comments starting with the dollar sign (\$) and long comments enclosed by double exclamation marks (!!). These comments are ignored by the scanner and are not transmitted to the parser.
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|}
+			\hline
+			Column 1 & Column 2 \\
+			\hline
+			Data 1 & Data 2 \\
+			\hline
+			Data 3 & Data 4 \\
+			\hline\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|}
+				\hline
+				Column 1 & Column 2 \\
+				\hline
+				Data 1 & Data 2 \\
+				\hline
+				Data 3 & Data 4 \\
+				\hline
 	\end{abstract}
 
 	
 	% Table of Contents
 	\tableofcontents
-	\newpage
-	
-	% List of Figures (if applicable)
-	\listoffigures
 	\newpage
 	
 	% List of Tables (if applicable)
@@ -65,24 +81,25 @@
 	% Introduction Chapter
 	\chapter{Introduction}
 	\section{Background}
-	Provide the background of the report here.
+	According to **Aho, Lam, Sethi, and Ullman (2007)** in *Compilers: Principles, Techniques, and Tools*, the process of compiling involves several critical stages, including lexical analysis, parsing, semantic analysis, and optimization before machine code is generated. These steps allow for the efficient translation of high-level language code into low-level machine instructions, ensuring that the compiled programs are fast and optimized for their specific runtime environment.
+	
+	This book is often referred to as the "Dragon Book" due to the dragon illustration on its cover and is a foundational text for anyone studying or working with compilers.
+	
 	\section{Objective}
-	State the main objectives of your work.
-	\section{Structure of the Report}
-	Briefly outline the structure of your report.
+		Assignment for Part 1: Produce a lexical analyzer of the compiler using JFlex.\\
 	
 	% Main Body Chapters
-	\chapter{Literature Review}
+	\chapter{Part 1}
 	Discuss relevant research and literature related to your topic.
 	
-	\chapter{Methodology}
-	Explain the methods and tools you used in your research or project.
+	%\chapter{Part 2}
+	%Explain the methods and tools you used in your research or project.
+	
+	%\chapter{Part 3}
+	%Explain the methods and tools you used in your research or project.
 	
 	\chapter{Results}
 	Present the results or findings from your work.
-	
-	\chapter{Discussion}
-	Interpret the results and compare them with previous work.
 	
 	\chapter{Conclusion}
 	Summarize the key points of your report and discuss possible future work.
@@ -92,10 +109,5 @@
 	\addcontentsline{toc}{chapter}{References}
 	\bibliographystyle{plain}
 	\bibliography{references}  % You can also enter references manually here
-	
-	% Appendix (if applicable)
-	\appendix
-	\chapter{Appendix A}
-	Include supplementary material like raw data or additional figures.
 	
 \end{document}
