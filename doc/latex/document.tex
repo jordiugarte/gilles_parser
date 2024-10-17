@@ -1,4 +1,5 @@
 \documentclass[12pt,a4paper]{report}
+\usepackage{verbatim}
 \usepackage{graphicx}       % For including images
 \usepackage{amsmath}        % For math symbols
 \usepackage{amssymb}        % For more math symbols
@@ -7,11 +8,12 @@
 \geometry{left=3cm,right=3cm,top=2.5cm,bottom=2.5cm}
 \usepackage{fancyhdr}       % For custom headers and footers
 \usepackage{setspace}       % For line spacing
+\usepackage{forest}
 
 % Custom header and footer
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{University Report}
+\fancyhead[L]{Lexer Compiler}
 \fancyhead[R]{\thepage}
 
 \begin{document}
@@ -47,50 +49,73 @@
 	% Abstract
 	\begin{abstract}
 		This project involves designing and developing a compiler for the language Professor Gilles GEERAERTS implied for the instructions for this project. This language is called the Genial Imperative Language for Learning and the Enlightenment of Students (GILLES). Its grammar is stated in Table 1.\\ It is defined with reserved keywords, program names, variable names, and numerical constants specified through lexical rules. Program names start with uppercase letters, while variable names begin with lowercase letters, both being case-sensitive. Integral numerical constants consist solely of digits. GILLES supports two types of comments: short comments starting with the dollar sign (\$) and long comments enclosed by double exclamation marks (!!). These comments are ignored by the scanner and are not transmitted to the parser.
-		
-		\begin{table}[h]
-			\centering
-			\begin{tabular}{|c|c|}
-			\hline
-			Column 1 & Column 2 \\
-			\hline
-			Data 1 & Data 2 \\
-			\hline
-			Data 3 & Data 4 \\
-			\hline\begin{table}[h]
-			\centering
-			\begin{tabular}{|c|c|}
-				\hline
-				Column 1 & Column 2 \\
-				\hline
-				Data 1 & Data 2 \\
-				\hline
-				Data 3 & Data 4 \\
-				\hline
 	\end{abstract}
 
-	
+
 	% Table of Contents
 	\tableofcontents
 	\newpage
 	
-	% List of Tables (if applicable)
-	\listoftables
-	\newpage
 	
 	% Introduction Chapter
 	\chapter{Introduction}
 	\section{Background}
-	According to **Aho, Lam, Sethi, and Ullman (2007)** in *Compilers: Principles, Techniques, and Tools*, the process of compiling involves several critical stages, including lexical analysis, parsing, semantic analysis, and optimization before machine code is generated. These steps allow for the efficient translation of high-level language code into low-level machine instructions, ensuring that the compiled programs are fast and optimized for their specific runtime environment.
+	According to **Aho, Lam, Sethi, and Ullman (2007)** in *Compilers: Principles, Techniques, and Tools*, the process of compiling involves several critical stages, including lexical analysis, parsing, semantic analysis, and optimization before machine code is generated. \\
+	Lexing, on the other hand, is the process of tokenization to make a text be converted into lexical tokens belonging to categories defined by a "lexer" program. \\
+	The project is conformed by the following files and classes:\\
+
+	The following java files: \texttt{LexicalUnit.java}, \texttt{Main.java} and  \texttt{Symbol.java} were provided from the beggining as support for the assignment. However, the  \texttt{Main.java} file was developed later to run the lexical analyzer class to perform the tests. The project structure can be best described in Table 1.\\
 	
-	This book is often referred to as the "Dragon Book" due to the dragon illustration on its cover and is a foundational text for anyone studying or working with compilers.
+	The source code is located in the  \texttt{src} folder, where the java files will me compiled into classes by running the following command:
+	\begin{verbatim}
+		$ make
+	\end{verbatim}
+	The previous command will also generate a .jar file called part1.jar to be runnable inside the dist folder. This jar file will run all tests inside the test folder. This can be runned by the command:
+	\begin{verbatim}
+		$ make test
+	\end{verbatim}
 	
+	\forestset{
+		folder/.style={align=center, font=\ttfamily, for tree={grow'=0, parent anchor=east, child anchor=west, anchor=mid west}},
+		file/.style={font=\ttfamily},
+	}
+
+	\begin{forest}
+		for tree={
+			folder,
+			edge={draw=gray},
+			l sep+=10pt,
+		}
+		[gilles{\_}parser
+		[src
+		[LexicalUnit.java, file]
+		[Main.java, file]
+		[Symbol.java, file]
+		]
+		[test
+		[Euclid.gls, file]
+		]
+		[more
+		]
+		[doc
+		[latex
+		[document.tex, file]
+		]
+		]
+		[dist
+		]
+		[README.md, file]
+		[Makefile, file]
+		]
+	\end{forest}
+
 	\section{Objective}
-		Assignment for Part 1: Produce a lexical analyzer of the compiler using JFlex.\\
+	Assignment for Part 1: Produce a lexical analyzer of the compiler using JFlex.\\
 	
 	% Main Body Chapters
 	\chapter{Part 1}
-	Discuss relevant research and literature related to your topic.
+	The lexer was developed by the following classes:
+	
 	
 	%\chapter{Part 2}
 	%Explain the methods and tools you used in your research or project.
