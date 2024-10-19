@@ -57,7 +57,8 @@
 
 	% Centered abstract content
 	\begin{center}
-		This project involves designing and developing a compiler for the language called \textit{Genial Imperative Language for Learning and the Enlightenment of Students} (GILLES). Its grammar is stated under the Background section.
+		This project involves designing and developing a compiler for the language called \textit{Genial Imperative Language for Learning and the Enlightenment of Students} (GILLES). Its grammar is stated under the Background section.\\
+		This report focuses on the initial phase of compiler development—the creation of a lexical analyzer using JFlex. The lexical analyzer is responsible for scanning GILLES source code, identifying lexical units, managing a symbol table, and handling errors. Through comprehensive testing with various GILLES programs, the lexical analyzer demonstrates robust tokenization and effective state transitions, laying a solid foundation for subsequent parts of the project.
 	\end{center}
 	\vspace*{\fill}
 
@@ -109,6 +110,18 @@
 		\centering
 		\caption{The GILLES grammar}
 	\end{table}
+
+	\subsection{Explanation of Key Rules}
+
+	\begin{itemize}
+	\item Program Declaration ([1]): Every GILLES program starts with the LET keyword, followed by a program name, the BE keyword, the code block, and concludes with END.
+	\item Code Block ([2], [3]): The <Code> non-terminal allows for a sequence of instructions separated by colons (:). It is recursively defined to accommodate multiple instructions or an empty sequence.
+	\item Instructions ([4]-[9]): The <Instruction> non-terminal can be an assignment, conditional (If), loop (While), function call (Call), output (Output), or input (Input).
+	\item Arithmetic Expressions ([10]-[19]): These rules define how arithmetic expressions are constructed using variables, numbers, parentheses, negation, and binary operators (+, -, *, /).
+	\item Conditionals ([20]-[27]): The <If> and <While> constructs enable conditional execution and looping based on specified conditions.
+	\item Input/Output ([29]-[30]): The language supports input (IN) and output (OUT) operations involving variables.
+	\end{itemize}
+
 
 
 	The following java files: \texttt{LexicalUnit.java} and \texttt{Symbol.java} were provided from the beginning as support for the assignment.
@@ -272,6 +285,8 @@
 									new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
 	  "WHILE"                { yybegin(CONDITION); System.out.println(
 									new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
+	  "ELSE"                 { System.out.println(
+									new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
 	  {VarName}              {
 								if (!variables.containsKey(yytext())) {
 									variables.put(yytext(), yyline+1);
@@ -289,6 +304,8 @@
 	Since there is a recursive definition of the \texttt{Code} block, the lexer transitions back to the \texttt{CODE} state after processing each instruction. This allows the lexer to handle multiple instructions in a program, as defined by the grammar.\\
 
 	We have also left out the \texttt{Call} block as it is not used in the grammar.\\
+
+	The "ELSE" keyword is also handled in the CODE block since it is not a separate block in the grammar. Once this has been parsed, the lexer should stay in the CODE block.\\
 
 
 	\subsubsection{Condition Block}
@@ -408,7 +425,7 @@
 
 	\subsubsection{Input and Output}
 	Input and output operations are defined in the grammar as follows.
-	The \")\" is used to move back to the CODE block since this rule has been collapsed into the CODE block instead of having it's own \"Output\" block.\\
+	The ) is used to move back to the CODE block since this rule has been collapsed into the CODE block instead of having it's own "Output" block.\\
 	\begin{verbatim}
 		/* Input/Output instructions */
 	<INPUT_OUTPUT> {
@@ -489,6 +506,24 @@
 	In the above example, the lexer would need to keep track of the nested comments and ensure that it doesn't stop at the first !! it encounters. The solution would possibly be to
 	introduce a stack to keep track of the nested comments but that seems like an overkill for the current simplistic grammar.\\
 
+	\subsection{Symbol Table Management}
+
+	The symbol table is implemented as a HashMap in Java, where each variable name (VarName) is mapped to its corresponding line number in the source code where it first appears.
+	When a variable is encountered in the source code, the lexer checks if it is already present in the symbol table. If not, the variable name and its line number are added to the symbol table.
+
+	\subsection{Error Handling}
+
+	The lexer is designed to detect and report errors gracefully. When an unrecognized symbol is encountered or a symbol is encountered in the incorrect rule, the lexer throws an error with the message "Unknown symbol detected".
+
+	For example, if the lexer encounters the > symbol, which is not defined in the current grammar, it will output:
+
+	\begin{verbatim}
+		Exception in thread "main" java.lang.Error: Unknown symbol detected 6, column 12: '>'
+			at LexicalAnalyzer.yylex(LexicalAnalyzer.java:765)
+			at Main.main(Main.java:11)
+		make: *** [Makefile:45: test] Error 1
+	\end{verbatim}
+
 
 	\section{Testing}
 	To test the lexical analyzer, we have provided a set of test files in the \texttt{test} folder. These test files contain GILLES programs that cover various aspects of the language.
@@ -496,7 +531,7 @@
 	\subsection{Test Files}
 	\begin{itemize}
 		\item \texttt{Euclid.gls} - A simple program to calculate the greatest common divisor of two numbers.
-		\item \texttt{InvalidSymbolEuclid.gls} - A program to calculate the factorial of a number.
+		\item \texttt{InvalidSymbolEuclid.gls} - Same as above but with an invalid symbol, .
 		\item \texttt{Sum.gls} - A simple program to calculate the sum of two numbers.
 		\item \texttt{ThreeLoopGibberish.gls} - An unncessarily complex program to test the lexer.
 		\item \texttt{InvalidAssignment.gls} - A program with invalid syntax to test error handling.
@@ -504,6 +539,44 @@
 		\item \texttt{Fibonacci.gls} - A program to calculate the factorial of a number.
 		\item \texttt{Whitespace.gls} - Random whitespace to test whitespace handling.
 	\end{itemize}
+
+	\subsection{Running the Tests}
+	To run the tests, we can use the following command, output will be displayed on the console:
+	\begin{verbatim}
+		$ make test TEST_FILE=test/Sum.gls
+		token: LET        	lexical unit: LET
+		token: sum        	lexical unit: PROGNAME
+		token: BE         	lexical unit: BE
+		token: IN         	lexical unit: INPUT
+		token: (          	lexical unit: LPAREN
+		token: a          	lexical unit: VARNAME
+		token: )          	lexical unit: RPAREN
+		token: :          	lexical unit: COLUMN
+		token: IN         	lexical unit: INPUT
+		token: (          	lexical unit: LPAREN
+		token: b          	lexical unit: VARNAME
+		token: )          	lexical unit: RPAREN
+		token: :          	lexical unit: COLUMN
+		token: c          	lexical unit: VARNAME
+		token: =          	lexical unit: ASSIGN
+		token: a          	lexical unit: VARNAME
+		token: +          	lexical unit: PLUS
+		token: b          	lexical unit: VARNAME
+		token: :          	lexical unit: COLUMN
+		token: END        	lexical unit: END
+		token: :          	lexical unit: COLUMN
+		token: OUT        	lexical unit: OUTPUT
+		token: (          	lexical unit: LPAREN
+		token: c          	lexical unit: VARNAME
+		token: )          	lexical unit: RPAREN
+		token: :          	lexical unit: COLUMN
+		token: END        	lexical unit: END
+
+		Variables
+		a	4
+		b	5
+		c	6
+	\end{verbatim}
 
 	\newpage
 
@@ -518,6 +591,17 @@
 	%\section*{References}
 	%\addcontentsline{toc}{chapter}{References}
 	%\bibliographystyle{plain}
-	%\bibliography{references}  % You can also enter references manually here
+	%\bibliography{references}
+
+	\addcontentsline{toc}{section}{References}
+
+	\begin{thebibliography}{9}
+
+	\bibitem{jflex}
+	JFlex \textit{JFlex - A lexical analyzer generator for Java}.
+	Documentation referred: \url{https://jflex.de/}
+
+	\end{thebibliography}
+
 	
 \end{document}

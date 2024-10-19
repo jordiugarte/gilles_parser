@@ -1,0 +1,9 @@
+$ If-else statement test
+LET IfElse BE:
+  IN(n):
+  IF {n == 0} THEN
+    OUT(0):
+  ELSE
+    OUT(n):
+  END:
+END

@@ -35,7 +35,7 @@ ProgName     = [a-zA-Z_][a-zA-Z0-9_]*
 VarName      = [a-zA-Z_][a-zA-Z0-9_]*
 Number       = [0-9]+
 Whitespace   = [ \t\r\n]+
-Comment      = "!!"[^\n]*
+Comment      = "!!"[^\n]*"!!"
 ShortComment = "\$"[^\n]*
 
 /* Lexer rules */
@@ -67,6 +67,7 @@ ShortComment = "\$"[^\n]*
   "OUT"                  { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
   "IF"                   { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
   "WHILE"                { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
+  "ELSE"                 { System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
   {VarName}              {
                             if (!variables.containsKey(yytext())) {
                                 variables.put(yytext(), yyline+1);
@@ -77,10 +78,12 @@ ShortComment = "\$"[^\n]*
   ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
 }
 
+
+
 /* Conditionals and loops */
 <CONDITION> {
-  "THEN"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
   "ELSE"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
+  "THEN"                 { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
   "REPEAT"               { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext())); }
   "END"                  { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.END, yyline, yycolumn, yytext())); }
   {Whitespace}           { /* Ignore whitespace */ }
