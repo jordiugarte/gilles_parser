@@ -22,15 +22,15 @@ import java.util.Map;
     }
 %}
 
-// Return value of the program
 %eofval{
     printSymbolTable();
 	return new Symbol(LexicalUnit.EOS, yyline, yycolumn);
 %eofval}
 
+/* Main states */
 %state PROGRAM, CODE, INSTRUCTION, ARITHMETIC, CONDITION, INPUT_OUTPUT
 
-/* Regular expression macros */
+/* Regular expression */
 ProgName     = [a-zA-Z_][a-zA-Z0-9_]*
 VarName      = [a-zA-Z_][a-zA-Z0-9_]*
 Number       = [0-9]+
@@ -55,7 +55,7 @@ ShortComment = "\$"[^\n]*
 
 /* Code block state */
 <CODE> {
-  {Whitespace}           { /* Ignore whitespace */ }
+  {Whitespace}+          { /* Ignore whitespace */ }
   {Comment}              { /* Ignore comments */ }
   {ShortComment}         { /* Ignore short comments */ }
   "BE"                   { System.out.println(new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext())); }
@@ -137,7 +137,7 @@ ShortComment = "\$"[^\n]*
   ":"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 
-/* Catch-all for any unrecognized input */
+/* Catch all for any unrecognized input */
 <YYINITIAL, PROGRAM, CODE, ARITHMETIC, CONDITION, INPUT_OUTPUT> {
   {Whitespace}           { /* Ignore whitespace */ }
   {Comment}              { /* Ignore comments */ }

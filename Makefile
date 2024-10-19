@@ -11,6 +11,7 @@ DIST_DIR = ${PWD}/dist
 MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
 JAR_NAME = $(DIST_DIR)/part1.jar
 TEST_DIR = ${PWD}/test
+TEST_FILE = Random.gls
 
 all: build jar
 
@@ -25,4 +26,4 @@ jar:
 .PHONY: all build jar test
 
 test:
-	@java -jar ${JAR_NAME} ${TEST_DIR}/Euclid.gls
+	@java -jar ${JAR_NAME} ${TEST_DIR}/${TEST_FILE}
