@@ -3,6 +3,7 @@
 # Variables
 JAVAC = javac
 JFLEX = jflex
+PDFLATEX = pdflatex
 JAR = jar
 PWD = $(shell pwd)
 SRC_DIR = src
@@ -19,6 +20,7 @@ build:
 	${JFLEX} ${SRC_DIR}/LexicalAnalyzer.flex
 	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/LexicalAnalyzer.java
 	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/Main.java
+	${PDFLATEX} -output-directory=./doc/ ./doc/latex/document.tex
 
 jar:
 	${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.txt -C ${SRC_DIR} .
