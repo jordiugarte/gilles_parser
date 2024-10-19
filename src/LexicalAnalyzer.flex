@@ -101,21 +101,21 @@ ShortComment = "\$"[^\n]*
   ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
   "{"                    { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
   "}"                    { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
-
 }
 
 /* Input/Output instructions */
 <INPUT_OUTPUT> {
   {Whitespace}           { /* Ignore whitespace */ }
   "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
   {VarName}              {
                             if (!variables.containsKey(yytext())) {
                                 variables.put(yytext(), yyline+1);
                             }
                             System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
                          }
-  ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
+  {Number}               { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); } /* In case of OUT(1) */
+  ":"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 
 /* Arithmetic expressions */
@@ -128,12 +128,12 @@ ShortComment = "\$"[^\n]*
                             }
                             System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
                          }
-  "\\+"                  { System.out.println(new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext())); }
+  "+"                  { System.out.println(new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext())); }
   "-"                    { System.out.println(new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext())); }
-  "\\*"                  { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
+  "*"                  { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
   "/"                    { System.out.println(new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext())); }
   "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
   ":"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 

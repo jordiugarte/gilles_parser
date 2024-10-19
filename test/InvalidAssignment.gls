@@ -1,0 +1,5 @@
+LET InvalidAssignment BE
+  5 = 10:  $ Invalid assignment
+  OUT(5):
+END
+

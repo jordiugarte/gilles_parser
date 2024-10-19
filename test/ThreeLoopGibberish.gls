@@ -1,0 +1,26 @@
+!! Random GIGO with ELSE as a VarName !!
+
+LET Random_Gigo BE
+  IN(a):
+  IN(b):
+  IN(c):
+  WHILE {0 < a} REPEAT
+    WHILE {0 < b} REPEAT
+      WHILE {0 < c} REPEAT
+        d = a+b+c:
+        IF {d == 0} THEN
+          OUT(d):
+        ELSE $ ELSE is a VarName here because it is not a keyword in this part of the grammar
+          OUT(b):
+        END:
+      END:
+      e = a+b:
+      IF {e == 0} THEN
+          OUT(e):
+      ELSE
+          OUT(a):
+      END:
+    END:
+  END:
+  OUT(a):
+END
