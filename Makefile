@@ -19,7 +19,7 @@ TEST_DIR = ${PWD}/test
 TEST_FILE ?= ${TEST_DIR}/Euclid.gls
 
 DOC_DIR = ${PWD}/doc
-LATEX_FILE = ${DOC_DIR}/latex/Report.tex
+LATEX_FILE = ${DOC_DIR}/latex/parser_part1/main.tex
 
 # Targets
 all: build jar

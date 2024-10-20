@@ -1,0 +1,122 @@
+\setcounter{secnumdepth}{1}
+
+\chapter{Introduction}
+
+\section{Background}
+	The primary objective of this project is to design and implement a compiler for GILLES. This report focuses on the initial phase of the compiler development, specifically the creation of a lexical analyzer using the JFlex tool. The lexical analyzer is responsible for scanning the source code, identifying lexical units, and managing a symbol table essential for further compilation stages.
+
+\subsection{GILLES Grammar Rules}
+\begin{footnotesize}
+	\begin{align*}
+		&[1] \quad \langle Program \rangle \rightarrow \text{LET } [\text{ProgName}] \text{ BE } \langle Code \rangle \text{ END} \\
+		&[2] \quad \langle Code \rangle \rightarrow \langle Instruction \rangle : \langle Code \rangle \\
+		&[3] \quad \rightarrow \varepsilon \\
+		&[4] \quad \langle Instruction \rangle \rightarrow \langle Assign \rangle \\
+		&[5] \quad \rightarrow \langle If \rangle \\
+		&[6] \quad \rightarrow \langle While \rangle \\
+		&[7] \quad \rightarrow \langle Call \rangle \\
+		&[8] \quad \rightarrow \langle Output \rangle \\
+		&[9] \quad \rightarrow \langle Input \rangle \\
+		&[10] \quad \langle Assign \rangle \rightarrow [\text{VarName}] = \langle ExprArith \rangle \\
+		&[11] \quad \langle ExprArith \rangle \rightarrow [\text{VarName}] \\
+		&[12] \quad \rightarrow [\text{Number}] \\
+		&[13] \quad \rightarrow ( \langle ExprArith \rangle ) \\
+		&[14] \quad \rightarrow - \langle ExprArith \rangle \\
+		&[15] \quad \rightarrow \langle ExprArith \rangle \langle Op \rangle \langle ExprArith \rangle \\
+		&[16] \quad \langle Op \rangle \rightarrow + \\
+		&[17] \quad \rightarrow - \\
+		&[18] \quad \rightarrow * \\
+		&[19] \quad \rightarrow / \\
+		&[20] \quad \langle If \rangle \rightarrow \text{IF } \{ \langle Cond \rangle \} \text{ THEN } \langle Code \rangle \text{ END} \\
+		&[21] \quad \rightarrow \text{IF } \{ \langle Cond \rangle \} \text{ THEN } \langle Code \rangle \text{ ELSE } \langle Code \rangle \text{ END} \\
+		&[22] \quad \langle Cond \rangle \rightarrow \langle Cond \rangle \rightarrow \langle Cond \rangle \\
+		&[23] \quad \rightarrow | \langle Cond \rangle | \\
+		&[24] \quad \rightarrow \langle ExprArith \rangle \langle Comp \rangle \langle ExprArith \rangle \\
+		&[25] \quad \langle Comp \rangle \rightarrow == \\
+		&[26] \quad \rightarrow <= \\
+		&[27] \quad \rightarrow < \\
+		&[28] \quad \langle While \rangle \rightarrow \text{WHILE } \{ \langle Cond \rangle \} \text{ REPEAT } \langle Code \rangle \text{ END} \\
+		&[29] \quad \langle Output \rangle \rightarrow \text{OUT}([\text{VarName}]) \\
+		&[30] \quad \langle Input \rangle \rightarrow \text{IN}([\text{VarName}]) \\
+	\end{align*}
+\end{footnotesize}
+
+	\begin{table}[h]
+		\centering
+		\caption{The GILLES grammar}
+	\end{table}
+
+ \subsection{Explanation of Key Rules}
+
+	\begin{itemize}
+	\item Program Declaration ([1]): Every GILLES program starts with the LET keyword, followed by a program name, the BE keyword, the code block, and concludes with END.
+	\item Code Block ([2], [3]): The <Code> non-terminal allows for a sequence of instructions separated by colons (:). It is recursively defined to accommodate multiple instructions or an empty sequence.
+	\item Instructions ([4]-[9]): The <Instruction> non-terminal can be an assignment, conditional (If), loop (While), function call (Call), output (Output), or input (Input).
+	\item Arithmetic Expressions ([10]-[19]): These rules define how arithmetic expressions are constructed using variables, numbers, parentheses, negation, and binary operators (+, -, *, /).
+	\item Conditionals ([20]-[27]): The <If> and <While> constructs enable conditional execution and looping based on specified conditions.
+	\item Input/Output ([29]-[30]): The language supports input (IN) and output (OUT) operations involving variables.
+	\end{itemize}
+
+    The following java files: \texttt{LexicalUnit.java} and \texttt{Symbol.java} were provided from the beginning as support for the assignment.
+	The file \texttt{Main.java} file was developed later to run the lexical analyzer class to perform the tests. The project structure can be best described in the Project Structure section.\\
+
+    The source code is located in the \texttt{src} folder, where the java files will me compiled into classes by running the following command:
+	\begin{verbatim}
+		$ make
+	\end{verbatim}
+	The previous command will also generate a .jar file called part1.jar to be runnable inside the dist folder. This jar file will run a test .gls file from the test folder. This can be run with the command:
+	\begin{verbatim}
+		$ make test
+	\end{verbatim}
+	We can also run the below to run a specific test file:
+	\begin{verbatim}
+		$ make test TEST_FILE=test/FILENAME.gls
+	\end{verbatim}
+	There are other commands that can be run to clean the project and generate the documentation.\\
+
+    \subsection{Project Structure}
+	
+	\forestset{
+		folder/.style={align=center, font=\ttfamily, for tree={grow'=0, parent anchor=east, child anchor=west, anchor=mid west}},
+		file/.style={font=\ttfamily},
+	}
+
+	\begin{forest}
+		for tree={
+			folder,
+			edge={draw=gray},
+			l sep+=10pt,
+		}
+		[gilles{\_}parser
+		[src
+		[LexicalUnit.java, file]
+		[Main.java, file]
+		[Symbol.java, file]
+		[LexicalAnalyzer.flex, file]
+		[manifest.mf, file]
+		]
+		[test
+		[Euclid.gls, file]
+		[Factorial.gls, file]
+		[\ldots other test files\ldots, file]
+		]
+		[more
+		]
+		[doc
+		[latex
+		[Report.tex, file]
+		]
+		[Report.pdf, file]
+		]
+		[dist
+		[part1.jar, file]
+		]
+		[README.md, file]
+		[Makefile, file]
+		]
+	\end{forest}
+
+    \begin{table}[h]
+		\centering
+		\caption{GILLES Parser project structure}
+	\end{table}

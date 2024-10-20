@@ -1,192 +1,6 @@
-%\documentclass[12pt,a4paper]{report}
-\documentclass{article}
-\usepackage{verbatim}
-\usepackage{graphicx}       % For including images
-\usepackage{amsmath}        % For math symbols
-\usepackage{hyperref}       % For hyperlinks in the document
-\usepackage{geometry}       % For adjusting margins
-\geometry{left=3cm,right=3cm,top=2.5cm,bottom=2.5cm}
-\usepackage{fancyhdr}       % For custom headers and footers
-\usepackage{setspace}       % For line spacing
-\usepackage{forest}
-\usepackage{cleveref}
+\setcounter{secnumdepth}{3}
 
-% Custom header and footer
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{Lexer Compiler}
-\fancyhead[R]{\thepage}
-
-\begin{document}
-	
-	% Title Page
-	\begin{titlepage}
-		\centering
-		\vspace*{2cm}
-		
-		\Huge
-		\textbf{Genial Imperative Language for Learning and the Enlightenment of Students (GILLES) Compiler}
-		
-		\vspace{1.5cm}
-		
-		\Large
-		\textbf{Siddharth SAHAY} \\
-		\textbf{Jordi UGARTE}		
-		
-		\vfill
-		
-		\Large
-		\textbf{Université Libre de Bruxelles} \\
-		\textbf{Introduction to Language Theory and Compiling} \\
-		\textbf{INFO-F403 – 2024-2025}
-		
-		\vspace{0.8cm}
-		
-		\large
-		\textbf{Submitted: \today}
-		
-		\vfill
-	\end{titlepage}
-
-	\tableofcontents
-	\newpage
-	\vspace*{\fill}
-	\begin{center}
-		\textbf{\LARGE Abstract} % This is the title for the abstract
-	\end{center}
-
-	% Centered abstract content
-	\begin{center}
-		This project involves designing and developing a compiler for the language called \textit{Genial Imperative Language for Learning and the Enlightenment of Students} (GILLES). Its grammar is stated under the Background section.\\
-		This report focuses on the initial phase of compiler development—the creation of a lexical analyzer using JFlex. The lexical analyzer is responsible for scanning GILLES source code, identifying lexical units, managing a symbol table, and handling errors. Through comprehensive testing with various GILLES programs, the lexical analyzer demonstrates robust tokenization and effective state transitions, laying a solid foundation for subsequent parts of the project.
-	\end{center}
-	\vspace*{\fill}
-
-
-	\newpage
-	
-	% Introduction Chapter
-	% \chapter{Introduction}
-	\section{Introduction}
-	\subsection{Background}
-	The primary objective of this project is to design and implement a compiler for GILLES. This report focuses on the initial phase of the compiler development, specifically the creation of a lexical analyzer using the JFlex tool. The lexical analyzer is responsible for scanning the source code, identifying lexical units, and managing a symbol table essential for further compilation stages.
-
-	\section{GILLES Grammar Rules}
-
-	\begin{align*}
-		&[1] \quad \langle Program \rangle \rightarrow \text{LET } [\text{ProgName}] \text{ BE } \langle Code \rangle \text{ END} \\
-		&[2] \quad \langle Code \rangle \rightarrow \langle Instruction \rangle : \langle Code \rangle \\
-		&[3] \quad \rightarrow \varepsilon \\
-		&[4] \quad \langle Instruction \rangle \rightarrow \langle Assign \rangle \\
-		&[5] \quad \rightarrow \langle If \rangle \\
-		&[6] \quad \rightarrow \langle While \rangle \\
-		&[7] \quad \rightarrow \langle Call \rangle \\
-		&[8] \quad \rightarrow \langle Output \rangle \\
-		&[9] \quad \rightarrow \langle Input \rangle \\
-		&[10] \quad \langle Assign \rangle \rightarrow [\text{VarName}] = \langle ExprArith \rangle \\
-		&[11] \quad \langle ExprArith \rangle \rightarrow [\text{VarName}] \\
-		&[12] \quad \rightarrow [\text{Number}] \\
-		&[13] \quad \rightarrow ( \langle ExprArith \rangle ) \\
-		&[14] \quad \rightarrow - \langle ExprArith \rangle \\
-		&[15] \quad \rightarrow \langle ExprArith \rangle \langle Op \rangle \langle ExprArith \rangle \\
-		&[16] \quad \langle Op \rangle \rightarrow + \\
-		&[17] \quad \rightarrow - \\
-		&[18] \quad \rightarrow * \\
-		&[19] \quad \rightarrow / \\
-		&[20] \quad \langle If \rangle \rightarrow \text{IF } \{ \langle Cond \rangle \} \text{ THEN } \langle Code \rangle \text{ END} \\
-		&[21] \quad \rightarrow \text{IF } \{ \langle Cond \rangle \} \text{ THEN } \langle Code \rangle \text{ ELSE } \langle Code \rangle \text{ END} \\
-		&[22] \quad \langle Cond \rangle \rightarrow \langle Cond \rangle \rightarrow \langle Cond \rangle \\
-		&[23] \quad \rightarrow | \langle Cond \rangle | \\
-		&[24] \quad \rightarrow \langle ExprArith \rangle \langle Comp \rangle \langle ExprArith \rangle \\
-		&[25] \quad \langle Comp \rangle \rightarrow == \\
-		&[26] \quad \rightarrow <= \\
-		&[27] \quad \rightarrow < \\
-		&[28] \quad \langle While \rangle \rightarrow \text{WHILE } \{ \langle Cond \rangle \} \text{ REPEAT } \langle Code \rangle \text{ END} \\
-		&[29] \quad \langle Output \rangle \rightarrow \text{OUT}([\text{VarName}]) \\
-		&[30] \quad \langle Input \rangle \rightarrow \text{IN}([\text{VarName}]) \\
-	\end{align*}
-
-	\begin{table}[h]
-		\centering
-		\caption{The GILLES grammar}
-	\end{table}
-
-	\subsection{Explanation of Key Rules}
-
-	\begin{itemize}
-	\item Program Declaration ([1]): Every GILLES program starts with the LET keyword, followed by a program name, the BE keyword, the code block, and concludes with END.
-	\item Code Block ([2], [3]): The <Code> non-terminal allows for a sequence of instructions separated by colons (:). It is recursively defined to accommodate multiple instructions or an empty sequence.
-	\item Instructions ([4]-[9]): The <Instruction> non-terminal can be an assignment, conditional (If), loop (While), function call (Call), output (Output), or input (Input).
-	\item Arithmetic Expressions ([10]-[19]): These rules define how arithmetic expressions are constructed using variables, numbers, parentheses, negation, and binary operators (+, -, *, /).
-	\item Conditionals ([20]-[27]): The <If> and <While> constructs enable conditional execution and looping based on specified conditions.
-	\item Input/Output ([29]-[30]): The language supports input (IN) and output (OUT) operations involving variables.
-	\end{itemize}
-
-
-
-	The following java files: \texttt{LexicalUnit.java} and \texttt{Symbol.java} were provided from the beginning as support for the assignment.
-	The file \texttt{Main.java} file was developed later to run the lexical analyzer class to perform the tests. The project structure can be best described in the Project Structure section.\\
-	
-	The source code is located in the \texttt{src} folder, where the java files will me compiled into classes by running the following command:
-	\begin{verbatim}
-		$ make
-	\end{verbatim}
-	The previous command will also generate a .jar file called part1.jar to be runnable inside the dist folder. This jar file will run a test .gls file from the test folder. This can be run with the command:
-	\begin{verbatim}
-		$ make test
-	\end{verbatim}
-	We can also run the below to run a specific test file:
-	\begin{verbatim}
-		$ make test TEST_FILE=test/FILENAME.gls
-	\end{verbatim}
-	There are other commands that can be run to clean the project and generate the documentation.\\
-
-	\section{Project Structure}
-	
-	\forestset{
-		folder/.style={align=center, font=\ttfamily, for tree={grow'=0, parent anchor=east, child anchor=west, anchor=mid west}},
-		file/.style={font=\ttfamily},
-	}
-
-	\begin{forest}
-		for tree={
-			folder,
-			edge={draw=gray},
-			l sep+=10pt,
-		}
-		[gilles{\_}parser
-		[src
-		[LexicalUnit.java, file]
-		[Main.java, file]
-		[Symbol.java, file]
-		[LexicalAnalyzer.flex, file]
-		[manifest.mf, file]
-		]
-		[test
-		[Euclid.gls, file]
-		[Factorial.gls, file]
-		[\ldots other test files\ldots, file]
-		]
-		[more
-		]
-		[doc
-		[latex
-		[Report.tex, file]
-		]
-		[Report.pdf, file]
-		]
-		[dist
-		[part1.jar, file]
-		]
-		[README.md, file]
-		[Makefile, file]
-		]
-	\end{forest}
-
-	\section{Objective}
-	Assignment for Part 1: Produce a lexical analyzer of the compiler using JFlex for the grammar described.\\
-	
-	% Main Body Chapters
+ % Main Body Chapters
 	\section{Part 1}
 	\subsection{Lexical Analyzer}
 	The lexical analyzer is responsible for scanning the source code, identifying lexical units,
@@ -200,7 +14,7 @@
 	The lexical analyzer also handles errors in the source code, such as invalid characters or tokens, and reports them to the user, if an unrecognised symbol is recognised we throw an \("\)Unknown symbol detected\("\) error.
 	The lexical analyzer is of course the first essential component of the compiler, as it provides the input for the parser, which analyzes the syntactic structure of the source code.\\
 
-	\subsection{Regular Expressions Used}
+	\subsection{Regular Expressions used}
 	Following the grammar rules, the following regular expressions were used to define the lexical units of the GILLES language:
 	\begin{align*}
 		&\text{ProgName}     = [a-zA-Z\_][a-zA-Z0-9\_]* \\
@@ -210,6 +24,10 @@
 		&\text{Comment}      = "!!"[^\text{\textbackslash} n]* \\
 		&\text{ShortComment} = "\$"[^\text{\textbackslash} n]*
 	\end{align*}
+    \begin{table}[h]
+		\centering
+		\caption{Regular expressions used}
+	\end{table}
 
 	These are relatively straightforward RegExps that identify the different types of tokens in the GILLES language. We will see how they're used in the JFlex file in the next section.\\
 
@@ -221,23 +39,31 @@
 	\subsubsection{The initial \texttt{LET} Statement}
 	The lexer begins in the \texttt{YYINITIAL} state, which captures the declaration of a program using the \texttt{LET} keyword. Upon encountering \texttt{LET}, the lexer transitions to the \texttt{PROGRAM} state, where the program name is expected, as per the grammar rule:
 
-	\begin{verbatim}
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	<Program> → LET [ProgName] BE <Code> END
-	\end{verbatim}
+	\end{minted}
+    \begin{table}[h]
+		\centering
+		\caption{Initialization of YYINITIAL state}
+	\end{table}
 
 	In the lexer, this is represented as:
 
-	\begin{verbatim}
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	"LET" { yybegin(PROGRAM);
 			System.out.println(new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext())); }
-	\end{verbatim}
+	\end{minted}
+    \begin{table}[h]
+		\centering
+		\caption{Initialization of YYINITIAL state in the lexer}
+	\end{table}
 
 	Once \texttt{LET} is matched, the lexer moves to the \texttt{PROGRAM} state where it expects the program name (\texttt{[ProgName]}), ensuring adherence to the grammar rule that requires a program name after \texttt{LET}.
 
 	\subsubsection{ProgName and transition to the CODE block}
 	After matching the program name in the \texttt{PROGRAM} state, the lexer transitions to the \texttt{CODE} state upon encountering the \texttt{BE} keyword, as required by the grammar:
 
-	\begin{verbatim}
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 		<Code> → <Instruction> : <Code>
 		<Instruction> → <Assign>
 					→ <If>
@@ -245,12 +71,21 @@
 					→ <Call>
 					→ <Output>
 					→ <Input>
-	\end{verbatim}
+	\end{minted}
+    \begin{table}[h]
+		\centering
+		\caption{ProgName and transition to the CODE block}
+	\end{table}
 
-	\begin{verbatim}
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	{ProgName} { yybegin(CODE);
 				 System.out.println(new Symbol(LexicalUnit.PROGNAME, yyline, yycolumn, yytext())); }
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{ProgName and transition to the CODE block}
+	\end{table}
 
 	The instruction block has been broken down into the different types of blocks directly rather than one by one for simplicity.\\
 
@@ -258,7 +93,7 @@
 
 	The following is the implementation of the \texttt{CODE} block in the lexer:
 
-	\begin{verbatim}
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	/* Code block state */
 	<CODE> {
 	  {Whitespace}+          { /* Ignore whitespace */ }
@@ -299,7 +134,12 @@
 	  ")"                    { System.out.println(
 									new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
 	}
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Implementation of Code Block in the lexer}
+	\end{table}
 
 	Since there is a recursive definition of the \texttt{Code} block, the lexer transitions back to the \texttt{CODE} state after processing each instruction. This allows the lexer to handle multiple instructions in a program, as defined by the grammar.\\
 
@@ -311,13 +151,13 @@
 	\subsubsection{Condition Block}
 	The lexer transitions to the \texttt{CONDITION} state upon encountering the \texttt{IF} or \texttt{WHILE} keywords, as defined in the grammar:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	<If> → IF { <Cond> } THEN <Code> END
 		 → IF { <Cond> } THEN <Code> ELSE <Code> END
 	<While> → WHILE {<Cond>} REPEAT <Code> END
-	\end{verbatim}
+	\end{minted}
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	/* Conditionals and loops */
 	<CONDITION> {
 	  "THEN"                 { yybegin(CODE); System.out.println(
@@ -359,39 +199,60 @@
 	  "}"                    { System.out.println(
 								new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
 	}
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Condition block implementation}
+	\end{table}
+ 
 	Notice also here that we do not have \">\" (GREATER\_THAN) as a token, this is because it is not used in the grammar (possibly left out intentionally?).\\
 
 	\subsubsection{Assignment Statements}
 	The assignment of values to variables is handled by recognizing both \texttt{VarName = ExprArith} as defined in the grammar:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 <Assign> → [VarName] = <ExprArith>
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Assignment of variables}
+	\end{table}
 
 	This rule is implemented in the lexer as:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 {VarName}"=" { yybegin(ARITHMETIC);
                System.out.println(new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext())); }
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Implementation of assignment of variables}
+	\end{table}
 
 	Upon matching an assignment, the lexer transitions to the \texttt{ARITHMETIC} state to evaluate arithmetic expressions.
 
 	\subsubsection{Arithmetic Expressions}
 	Arithmetic expressions (\texttt{ExprArith}) are handled in the \texttt{ARITHMETIC} state. The lexer recognizes variable names, numbers, and operators (\texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}), as well as parentheses for grouping, as defined by the grammar:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 <ExprArith> → [VarName]
 			→ [Number]
 			→ ( <ExprArith> )
 			→ - <ExprArith>
 			→ <ExprArith> <Op> <ExprArith>
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Arithmetic expressions}
+	\end{table}
 
 	In the lexer, this is implemented as follows:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	/* Arithmetic expressions */
 	<ARITHMETIC> {
 	  {Whitespace}           { /* Ignore whitespace */ }
@@ -419,14 +280,19 @@
 									new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 	}
 
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Implementation of arithmetic expressions}
+	\end{table}
 
 	The arithmetic expressions are evaluated based on the sequence of operators and operands, this might be useful later when we need to evaluate the expressions.\\
 
 	\subsubsection{Input and Output}
 	Input and output operations are defined in the grammar as follows.
 	The ) is used to move back to the CODE block since this rule has been collapsed into the CODE block instead of having it's own "Output" block.\\
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 		/* Input/Output instructions */
 	<INPUT_OUTPUT> {
 	  {Whitespace}           { /* Ignore whitespace */ }
@@ -440,43 +306,68 @@
 							 }
 	  ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 	}
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Input and output operations}
+	\end{table}
 
 	\subsubsection{Conditionals and Loops}
 	Conditionals and loops are defined in the grammar as follows:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 <If> → IF { <Cond> } THEN <Code> END
 <While> → WHILE {<Cond>} REPEAT <Code> END
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Conditionals and loops}
+	\end{table}
 
 	In the lexer, the \texttt{IF} and \texttt{WHILE} keywords trigger a transition to the \texttt{CONDITION} state where the conditional expressions are evaluated:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 "IF"    { yybegin(CONDITION);
           System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
 "WHILE" { yybegin(CONDITION);
           System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Conditionals and loops implementation}
+	\end{table}
 
 	The \texttt{CONDITION} state then handles comparison operators (\texttt{==}, \texttt{<=}, \texttt{<}) and conditional expressions (\texttt{VarName}, \texttt{Number}, \texttt{ExprArith}), adhering to the grammar's definitions for conditions.
 
 	\subsubsection{Input and Output}
 	Input and output operations are defined as:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 <Output> → OUT([VarName])
 <Input> → IN([VarName])
-	\end{verbatim}
+	\end{minted}
+
+     \begin{table}[h]
+		\centering
+		\caption{Input and output operations}
+	\end{table}
 
 	In the lexer, these are handled in the \texttt{INPUT\_OUTPUT} state:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 "IN"  { yybegin(INPUT_OUTPUT);
         System.out.println(new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext())); }
 "OUT" { yybegin(INPUT_OUTPUT);
         System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Input and output operations implementation}
+	\end{table}
 
 	This implementation captures the \texttt{IN} and \texttt{OUT} keywords, ensuring that the correct symbols are generated in accordance with the grammar.
 
@@ -484,12 +375,17 @@
 	\subsubsection{Whitespace and Comments}
 	The lexer is designed to ignore unnecessary whitespace and comments. Both multi-line (\texttt{\{Comment\}}) and single-line (\texttt{\{ShortComment\}}) comments are handled across different states to prevent irrelevant tokens from being processed. This aligns with the GILLES grammar, which does not consider whitespace and comments as significant parts of the language.
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	/* Ignore whitespace and comments */
 	{Whitespace}           { /* Ignore whitespace */ }
 	{Comment}              { /* Ignore comments */ }
 	{ShortComment}         { /* Ignore short comments */ }
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Whitespaces and comments}
+	\end{table}
 
 	This ensures that the parsing of valid tokens, such as program names or arithmetic expressions, is unaffected by whitespace or comments.\\
 	The reason that nested comments are not supported is that it is explicitly not part of the grammar, but also becasue nested comments are challenging to track, i.e., it
@@ -497,11 +393,16 @@
 
 	For example, if your comment structure looks like !! to start and !! to end, the difficulty arises when we encounter something like this:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 	!! This is a 1st level comment
 	   !! Nested 2nd level comment !!
 	   1st level comment again !! $ Not a valid comment since it already ended above!
-	\end{verbatim}
+	\end{minted}
+
+    \begin{table}[h]
+		\centering
+		\caption{Whitespaces and comments example}
+	\end{table}
 
 	In the above example, the lexer would need to keep track of the nested comments and ensure that it doesn't stop at the first !! it encounters. The solution would possibly be to
 	introduce a stack to keep track of the nested comments but that seems like an overkill for the current simplistic grammar.\\
@@ -517,13 +418,17 @@
 
 	For example, if the lexer encounters the > symbol, which is not defined in the current grammar, it will output:
 
-	\begin{verbatim}
+	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 		Exception in thread "main" java.lang.Error: Unknown symbol detected 6, column 12: '>'
 			at LexicalAnalyzer.yylex(LexicalAnalyzer.java:765)
 			at Main.main(Main.java:11)
 		make: *** [Makefile:45: test] Error 1
-	\end{verbatim}
+	\end{minted}
 
+    \begin{table}[h]
+		\centering
+		\caption{Exception in case of error in the lexer}
+	\end{table}
 
 	\section{Testing}
 	To test the lexical analyzer, we have provided a set of test files in the \texttt{test} folder. These test files contain GILLES programs that cover various aspects of the language.
@@ -544,6 +449,9 @@
 	To run the tests, we can use the following command, output will be displayed on the console:
 	\begin{verbatim}
 		$ make test TEST_FILE=test/Sum.gls
+    \end{verbatim}
+  
+    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 		token: LET        	lexical unit: LET
 		token: sum        	lexical unit: PROGNAME
 		token: BE         	lexical unit: BE
@@ -576,32 +484,9 @@
 		a	4
 		b	5
 		c	6
-	\end{verbatim}
+	\end{minted}
 
-	\newpage
-
-	\section{Part 2}
-	TBC
-	\newpage
-
-	\section{Part 3}
-	TBC
-
-	% Bibliography/References
-	%\section*{References}
-	%\addcontentsline{toc}{chapter}{References}
-	%\bibliographystyle{plain}
-	%\bibliography{references}
-
-	\addcontentsline{toc}{section}{References}
-
-	\begin{thebibliography}{9}
-
-	\bibitem{jflex}
-	JFlex \textit{JFlex - A lexical analyzer generator for Java}.
-	Documentation referred: \url{https://jflex.de/}
-
-	\end{thebibliography}
-
-	
-\end{document}
+    \begin{table}[h]
+		\centering
+		\caption{Test datasheet}
+	\end{table}
