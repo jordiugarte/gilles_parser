@@ -1,8 +1,10 @@
 \setcounter{secnumdepth}{3}
 
+\chapter{Part 1}
+
  % Main Body Chapters
-	\section{Part 1}
-	\subsection{Lexical Analyzer}
+    \section{Part 1}
+    \subsection{Lexical Analyzer}
 	The lexical analyzer is responsible for scanning the source code, identifying lexical units,
 	and managing a symbol table essential for further compilation stages.
 	The lexical analyzer is implemented using JFlex, a lexical analyzer generator for Java.
@@ -64,13 +66,13 @@
 	After matching the program name in the \texttt{PROGRAM} state, the lexer transitions to the \texttt{CODE} state upon encountering the \texttt{BE} keyword, as required by the grammar:
 
     \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-		<Code> → <Instruction> : <Code>
-		<Instruction> → <Assign>
-					→ <If>
-					→ <While>
-					→ <Call>
-					→ <Output>
-					→ <Input>
+<Code> → <Instruction> : <Code>
+<Instruction> → <Assign>
+    → <If>
+    → <While>
+    → <Call>
+    → <Output>
+    → <Input>
 	\end{minted}
     \begin{table}[h]
 		\centering
@@ -78,8 +80,8 @@
 	\end{table}
 
     \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	{ProgName} { yybegin(CODE);
-				 System.out.println(new Symbol(LexicalUnit.PROGNAME, yyline, yycolumn, yytext())); }
+{ProgName} { yybegin(CODE);
+System.out.println(new Symbol(LexicalUnit.PROGNAME, yyline, yycolumn, yytext())); }
 	\end{minted}
 
     \begin{table}[h]
@@ -89,52 +91,47 @@
 
 	The instruction block has been broken down into the different types of blocks directly rather than one by one for simplicity.\\
 
-	\subsubsection{Code Block}
+\subsubsection{Code Block}
 
 	The following is the implementation of the \texttt{CODE} block in the lexer:
 
     \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	/* Code block state */
-	<CODE> {
-	  {Whitespace}+          { /* Ignore whitespace */ }
-	  {Comment}              { /* Ignore comments */ }
-	  {ShortComment}         { /* Ignore short comments */ }
-	  "BE"                   { System.out.println(
-									new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext())); }
-	  "END"                  {
-								yybegin(CODE);
-								System.out.println(
-									new Symbol(LexicalUnit.END, yyline, yycolumn, yytext()));
-						     }
-	  ":"                    { System.out.println(
-									new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
-	  {VarName}"="           { yybegin(ARITHMETIC); System.out.println(
-									new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext())); }
-	  "="                    { yybegin(ARITHMETIC); System.out.println(
-									new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext())); }
-	  "IN"                   { yybegin(INPUT_OUTPUT); System.out.println(
-									new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext())); }
-	  "OUT"                  { yybegin(INPUT_OUTPUT); System.out.println(
-									new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
-	  "IF"                   { yybegin(CONDITION); System.out.println(
-									new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
-	  "WHILE"                { yybegin(CONDITION); System.out.println(
-									new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
-	  "ELSE"                 { System.out.println(
-									new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
-	  {VarName}              {
-								if (!variables.containsKey(yytext())) {
-									variables.put(yytext(), yyline+1);
-								}
-								System.out.println(
-									new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
-							 }
-	  "("                    { System.out.println(
-									new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-	  ")"                    { System.out.println(
-									new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-	}
-	\end{minted}
+/* Code block state */
+<CODE> {
+    {Whitespace}+ { /* Ignore whitespace */ }
+    {Comment} { /* Ignore comments */ }
+    {ShortComment} { /* Ignore short comments */ }
+    "BE" { System.out.println(new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext())); }
+    "END" {
+        yybegin(CODE);
+        System.out.println(
+        new Symbol(LexicalUnit.END, yyline, yycolumn, yytext()));
+    }
+    ":" { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
+    {VarName}"=" 
+    { yybegin(ARITHMETIC); System.out.println(new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext())); }
+    "=" 
+    { yybegin(ARITHMETIC); System.out.println(new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext())); }
+    "IN"
+    { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext())); }
+    "OUT"
+    { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
+    "IF"
+    { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
+    "WHILE"
+    { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
+    "ELSE"
+    { System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
+    {VarName} {
+        if (!variables.containsKey(yytext())) {
+            variables.put(yytext(), yyline+1);
+        }
+        System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+    }
+    "(" { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+    ")" { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+}
+\end{minted}
 
     \begin{table}[h]
 		\centering
@@ -152,53 +149,37 @@
 	The lexer transitions to the \texttt{CONDITION} state upon encountering the \texttt{IF} or \texttt{WHILE} keywords, as defined in the grammar:
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	<If> → IF { <Cond> } THEN <Code> END
-		 → IF { <Cond> } THEN <Code> ELSE <Code> END
-	<While> → WHILE {<Cond>} REPEAT <Code> END
+<If> → IF { <Cond> } THEN <Code> END
+    → IF { <Cond> } THEN <Code> ELSE <Code> END
+<While> → WHILE {<Cond>} REPEAT <Code> END
 	\end{minted}
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	/* Conditionals and loops */
-	<CONDITION> {
-	  "THEN"                 { yybegin(CODE); System.out.println(
-								new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
-	  "ELSE"                 { yybegin(CODE); System.out.println(
-								new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
-	  "REPEAT"               { yybegin(CODE); System.out.println(
-								new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext())); }
-	  "END"                  { yybegin(CODE); System.out.println(
-								new Symbol(LexicalUnit.END, yyline, yycolumn, yytext())); }
-	  {Whitespace}           { /* Ignore whitespace */ }
-	  {Number}               { System.out.println(
-								new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
-	  {VarName}              {
-								if (!variables.containsKey(yytext())) {
-									variables.put(yytext(), yyline+1);
-								}
-								System.out.println(
-									new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
-							 }
-	  "=="                   { System.out.println(
-								new Symbol(LexicalUnit.EQUAL, yyline, yycolumn, yytext())); }
-	  "<="                   { System.out.println(
-								new Symbol(LexicalUnit.SMALEQ, yyline, yycolumn, yytext())); }
-	  "<"                    { System.out.println(
-								new Symbol(LexicalUnit.SMALLER, yyline, yycolumn, yytext())); }
-	  "|"                    { System.out.println(
-								new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext())); }
-	  "->"                   { System.out.println(
-								new Symbol(LexicalUnit.IMPLIES, yyline, yycolumn, yytext())); }
-	  "("                    { System.out.println(
-								new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-	  ")"                    { System.out.println(
-								new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-	  ":"                    { System.out.println(
-								new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
-	  "{"                    { System.out.println(
-								new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
-	  "}"                    { System.out.println(
-								new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
-	}
+/* Conditionals and loops */
+<CONDITION> {
+    "THEN" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext())); }
+    "ELSE" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext())); }
+    "REPEAT" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext())); }
+    "END" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.END, yyline, yycolumn, yytext())); }
+    {Whitespace} { /* Ignore whitespace */ }
+    {Number} { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
+    {VarName} {
+        if (!variables.containsKey(yytext())) {
+            variables.put(yytext(), yyline+1);
+        }
+        System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+    }
+    "==" { System.out.println(new Symbol(LexicalUnit.EQUAL, yyline, yycolumn, yytext())); }
+    "<=" { System.out.println(new Symbol(LexicalUnit.SMALEQ, yyline, yycolumn, yytext())); }
+    "<" { System.out.println(new Symbol(LexicalUnit.SMALLER, yyline, yycolumn, yytext())); }
+    "|" { System.out.println(new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext())); }
+    "->" { System.out.println(new Symbol(LexicalUnit.IMPLIES, yyline, yycolumn, yytext())); }
+    "(" { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+    ")" { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+    ":" { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
+    "{" { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
+    "}" { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
+}
 	\end{minted}
 
     \begin{table}[h]
@@ -239,10 +220,10 @@
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 <ExprArith> → [VarName]
-			→ [Number]
-			→ ( <ExprArith> )
-			→ - <ExprArith>
-			→ <ExprArith> <Op> <ExprArith>
+    → [Number]
+    → ( <ExprArith> )
+    → - <ExprArith>
+    → <ExprArith> <Op> <ExprArith>
 	\end{minted}
 
     \begin{table}[h]
@@ -253,31 +234,25 @@
 	In the lexer, this is implemented as follows:
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	/* Arithmetic expressions */
-	<ARITHMETIC> {
-	  {Whitespace}           { /* Ignore whitespace */ }
-	  {Number}               { System.out.println(
-									new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
-	  {VarName}              {
-								if (!variables.containsKey(yytext())) {
-									variables.put(yytext(), yyline+1);
-								}
-								System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
-							 }
-	  "+"                  { System.out.println(
-									new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext())); }
-	  "-"                    { System.out.println(
-									new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext())); }
-	  "*"                  { System.out.println(
-									new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
-	  "/"                    { System.out.println(
-									new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext())); }
-	  "("                    { System.out.println(
-									new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-	  ")"                    { yybegin(CODE); System.out.println(
-									new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-	  ":"                    { yybegin(CODE); System.out.println(
-									new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
+/* Arithmetic expressions */
+    <ARITHMETIC> {
+        {Whitespace} { /* Ignore whitespace */ }
+	  {Number} { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext())); }
+	  {VarName} {
+            if (!variables.containsKey(yytext())) {
+                variables.put(yytext(), yyline+1);
+            }
+            System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+        }
+	  "+" { System.out.println(new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext())); }
+	  "-" { System.out.println(new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext())); }
+	  "*" { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
+	  "/" { System.out.println(new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext())); }
+	  "(" { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+	  ")" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, 
+   yytext())); }
+	  ":" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, 
+   yytext())); }
 	}
 
 	\end{minted}
@@ -293,20 +268,20 @@
 	Input and output operations are defined in the grammar as follows.
 	The ) is used to move back to the CODE block since this rule has been collapsed into the CODE block instead of having it's own "Output" block.\\
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-		/* Input/Output instructions */
-	<INPUT_OUTPUT> {
-	  {Whitespace}           { /* Ignore whitespace */ }
-	  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-	  ")"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
-	  {VarName}              {
-								if (!variables.containsKey(yytext())) {
-									variables.put(yytext(), yyline+1);
-								}
-								System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
-							 }
-	  ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
-	}
-	\end{minted}
+/* Input/Output instructions */
+<INPUT_OUTPUT> {
+    {Whitespace} { /* Ignore whitespace */ }
+    "(" { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+=   ")" { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+    {VarName} {
+        if (!variables.containsKey(yytext())) {
+            variables.put(yytext(), yyline+1);
+        }
+        System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
+    }
+    ":" { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
+}
+\end{minted}
 
     \begin{table}[h]
 		\centering
@@ -329,10 +304,10 @@
 	In the lexer, the \texttt{IF} and \texttt{WHILE} keywords trigger a transition to the \texttt{CONDITION} state where the conditional expressions are evaluated:
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-"IF"    { yybegin(CONDITION);
-          System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
+"IF" { yybegin(CONDITION);
+System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext())); }
 "WHILE" { yybegin(CONDITION);
-          System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
+System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
 	\end{minted}
 
     \begin{table}[h]
@@ -359,9 +334,9 @@
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
 "IN"  { yybegin(INPUT_OUTPUT);
-        System.out.println(new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext())); }
+    System.out.println(new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext())); }
 "OUT" { yybegin(INPUT_OUTPUT);
-        System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
+    System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext())); }
 	\end{minted}
 
     \begin{table}[h]
@@ -376,10 +351,10 @@
 	The lexer is designed to ignore unnecessary whitespace and comments. Both multi-line (\texttt{\{Comment\}}) and single-line (\texttt{\{ShortComment\}}) comments are handled across different states to prevent irrelevant tokens from being processed. This aligns with the GILLES grammar, which does not consider whitespace and comments as significant parts of the language.
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	/* Ignore whitespace and comments */
-	{Whitespace}           { /* Ignore whitespace */ }
-	{Comment}              { /* Ignore comments */ }
-	{ShortComment}         { /* Ignore short comments */ }
+/* Ignore whitespace and comments */
+{Whitespace} { /* Ignore whitespace */ }
+{Comment} { /* Ignore comments */ }
+{ShortComment} { /* Ignore short comments */ }
 	\end{minted}
 
     \begin{table}[h]
@@ -393,16 +368,16 @@
 
 	For example, if your comment structure looks like !! to start and !! to end, the difficulty arises when we encounter something like this:
 
-	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-	!! This is a 1st level comment
-	   !! Nested 2nd level comment !!
-	   1st level comment again !! $ Not a valid comment since it already ended above!
-	\end{minted}
+\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
+!! This is a 1st level comment
+!! Nested 2nd level comment !!
+1st level comment again !! $ Not a valid comment since it already ended above!
+\end{minted}
 
-    \begin{table}[h]
-		\centering
-		\caption{Whitespaces and comments example}
-	\end{table}
+\begin{table}[h]
+    \centering
+    \caption{Whitespaces and comments example}
+\end{table}
 
 	In the above example, the lexer would need to keep track of the nested comments and ensure that it doesn't stop at the first !! it encounters. The solution would possibly be to
 	introduce a stack to keep track of the nested comments but that seems like an overkill for the current simplistic grammar.\\
@@ -419,74 +394,14 @@
 	For example, if the lexer encounters the > symbol, which is not defined in the current grammar, it will output:
 
 	\begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-		Exception in thread "main" java.lang.Error: Unknown symbol detected 6, column 12: '>'
-			at LexicalAnalyzer.yylex(LexicalAnalyzer.java:765)
-			at Main.main(Main.java:11)
-		make: *** [Makefile:45: test] Error 1
+Exception in thread "main" java.lang.Error: Unknown symbol detected 6, column 12: '>'
+    at LexicalAnalyzer.yylex(LexicalAnalyzer.java:765)
+    at Main.main(Main.java:11)
+make: *** [Makefile:45: test] Error 1
 	\end{minted}
 
     \begin{table}[h]
 		\centering
 		\caption{Exception in case of error in the lexer}
 	\end{table}
-
-	\section{Testing}
-	To test the lexical analyzer, we have provided a set of test files in the \texttt{test} folder. These test files contain GILLES programs that cover various aspects of the language.
-	We've tried to incorporate different kinds of edge cases and code structures to ensure that the lexical analyzer can handle a wide range of inputs.
-	\subsection{Test Files}
-	\begin{itemize}
-		\item \texttt{Euclid.gls} - A simple program to calculate the greatest common divisor of two numbers.
-		\item \texttt{InvalidSymbolEuclid.gls} - Same as above but with an invalid symbol, .
-		\item \texttt{Sum.gls} - A simple program to calculate the sum of two numbers.
-		\item \texttt{ThreeLoopGibberish.gls} - An unncessarily complex program to test the lexer.
-		\item \texttt{InvalidAssignment.gls} - A program with invalid syntax to test error handling.
-		\item \texttt{ComplexAssignment.gls} - A program with complex arithmetic expression.
-		\item \texttt{Fibonacci.gls} - A program to calculate the factorial of a number.
-		\item \texttt{Whitespace.gls} - Random whitespace to test whitespace handling.
-	\end{itemize}
-
-	\subsection{Running the Tests}
-	To run the tests, we can use the following command, output will be displayed on the console:
-	\begin{verbatim}
-		$ make test TEST_FILE=test/Sum.gls
-    \end{verbatim}
-  
-    \begin{minted}[fontsize=\footnotesize, linenos, frame=lines]{java}
-		token: LET        	lexical unit: LET
-		token: sum        	lexical unit: PROGNAME
-		token: BE         	lexical unit: BE
-		token: IN         	lexical unit: INPUT
-		token: (          	lexical unit: LPAREN
-		token: a          	lexical unit: VARNAME
-		token: )          	lexical unit: RPAREN
-		token: :          	lexical unit: COLUMN
-		token: IN         	lexical unit: INPUT
-		token: (          	lexical unit: LPAREN
-		token: b          	lexical unit: VARNAME
-		token: )          	lexical unit: RPAREN
-		token: :          	lexical unit: COLUMN
-		token: c          	lexical unit: VARNAME
-		token: =          	lexical unit: ASSIGN
-		token: a          	lexical unit: VARNAME
-		token: +          	lexical unit: PLUS
-		token: b          	lexical unit: VARNAME
-		token: :          	lexical unit: COLUMN
-		token: END        	lexical unit: END
-		token: :          	lexical unit: COLUMN
-		token: OUT        	lexical unit: OUTPUT
-		token: (          	lexical unit: LPAREN
-		token: c          	lexical unit: VARNAME
-		token: )          	lexical unit: RPAREN
-		token: :          	lexical unit: COLUMN
-		token: END        	lexical unit: END
-
-		Variables
-		a	4
-		b	5
-		c	6
-	\end{minted}
-
-    \begin{table}[h]
-		\centering
-		\caption{Test datasheet}
-	\end{table}
+ 
