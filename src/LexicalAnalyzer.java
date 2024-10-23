@@ -104,15 +104,14 @@ class LexicalAnalyzer {
   private static final String ZZ_ACTION_PACKED_0 =
     "\7\0\1\1\1\2\1\3\1\1\1\4\1\1\1\5"+
     "\1\6\1\7\1\10\1\11\6\12\1\13\1\14\1\15"+
-    "\1\16\1\17\1\20\1\21\1\12\1\22\1\1\1\23"+
-    "\1\1\3\12\1\24\1\25\1\26\1\27\2\0\1\30"+
-    "\2\12\1\31\1\32\2\12\1\33\1\34\1\35\4\12"+
-    "\1\0\1\36\1\12\1\37\1\40\2\12\1\37\2\12"+
-    "\1\41\1\42\1\12\1\43\1\12\1\44\1\45\1\12"+
-    "\1\46";
+    "\1\16\1\17\1\20\1\12\1\1\1\21\1\1\3\12"+
+    "\1\22\1\23\1\24\2\0\1\25\2\12\1\26\1\27"+
+    "\2\12\1\30\1\31\1\32\4\12\1\0\1\33\1\12"+
+    "\1\34\1\35\2\12\1\34\2\12\1\36\1\37\1\12"+
+    "\1\40\1\12\1\41\1\42\1\12\1\43";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[78];
+    int [] result = new int[75];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -140,16 +139,16 @@ class LexicalAnalyzer {
     "\0\0\0\45\0\112\0\157\0\224\0\271\0\336\0\u0103"+
     "\0\u0128\0\u0103\0\u014d\0\u0172\0\u0197\0\u01bc\0\u0103\0\u0103"+
     "\0\u0103\0\u0103\0\u01e1\0\u0206\0\u022b\0\u0250\0\u0275\0\u029a"+
-    "\0\u0103\0\u0103\0\u0103\0\u0103\0\u0103\0\u02bf\0\u0103\0\u02e4"+
-    "\0\u0103\0\u0309\0\u032e\0\u0353\0\u0378\0\u039d\0\u03c2\0\u0103"+
-    "\0\u0103\0\u0103\0\u0103\0\u03e7\0\u040c\0\u01e1\0\u0431\0\u0456"+
-    "\0\u01e1\0\u01e1\0\u047b\0\u04a0\0\u0103\0\u0103\0\u0103\0\u04c5"+
-    "\0\u04ea\0\u050f\0\u0534\0\u0559\0\u0103\0\u057e\0\u01e1\0\u01e1"+
-    "\0\u05a3\0\u05c8\0\u02e4\0\u05ed\0\u0612\0\u0559\0\u01e1\0\u0637"+
-    "\0\u02e4\0\u065c\0\u02e4\0\u01e1\0\u0681\0\u02e4";
+    "\0\u0103\0\u0103\0\u0103\0\u0103\0\u02bf\0\u0103\0\u02e4\0\u0309"+
+    "\0\u032e\0\u0353\0\u0378\0\u039d\0\u03c2\0\u0103\0\u0103\0\u0103"+
+    "\0\u03e7\0\u040c\0\u01e1\0\u0431\0\u0456\0\u01e1\0\u01e1\0\u047b"+
+    "\0\u04a0\0\u0103\0\u0103\0\u0103\0\u04c5\0\u04ea\0\u050f\0\u0534"+
+    "\0\u0559\0\u0103\0\u057e\0\u01e1\0\u01e1\0\u05a3\0\u05c8\0\u02e4"+
+    "\0\u05ed\0\u0612\0\u0559\0\u01e1\0\u0637\0\u02e4\0\u065c\0\u02e4"+
+    "\0\u01e1\0\u0681\0\u02e4";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[78];
+    int [] result = new int[75];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -177,40 +176,40 @@ class LexicalAnalyzer {
     "\1\12\1\13\1\14\1\17\1\20\5\10\1\21\1\10"+
     "\1\22\1\10\1\23\1\24\2\23\1\25\2\23\1\26"+
     "\2\23\1\27\5\23\1\30\3\10\45\12\1\10\2\11"+
-    "\1\12\1\13\1\14\1\17\1\31\1\32\1\33\1\34"+
-    "\1\35\1\36\1\37\3\10\21\40\4\10\2\11\1\12"+
-    "\1\13\1\14\1\17\1\41\2\10\1\42\1\10\1\36"+
-    "\1\21\1\43\1\44\1\10\4\40\1\45\7\40\1\46"+
-    "\1\40\1\47\2\40\1\50\1\51\1\52\1\10\2\11"+
-    "\1\12\1\13\1\14\1\17\1\53\4\10\1\36\1\37"+
-    "\3\10\21\40\3\10\46\0\2\11\46\0\1\54\40\0"+
-    "\2\14\1\0\42\14\25\0\1\55\33\0\1\16\4\0"+
+    "\1\12\1\13\1\14\1\17\1\20\1\31\1\32\1\33"+
+    "\1\34\1\35\1\36\3\10\21\37\4\10\2\11\1\12"+
+    "\1\13\1\14\1\17\1\20\2\10\1\40\1\10\1\35"+
+    "\1\21\1\41\1\42\1\10\4\37\1\43\7\37\1\44"+
+    "\1\37\1\45\2\37\1\46\1\47\1\50\1\10\2\11"+
+    "\1\12\1\13\1\14\1\17\1\20\4\10\1\35\1\36"+
+    "\3\10\21\37\3\10\46\0\2\11\46\0\1\51\40\0"+
+    "\2\14\1\0\42\14\25\0\1\52\33\0\1\16\4\0"+
     "\21\16\17\0\1\23\2\0\1\22\1\0\21\23\17\0"+
-    "\1\23\2\0\1\22\1\0\4\23\1\56\14\23\17\0"+
-    "\1\23\2\0\1\22\1\0\10\23\1\57\1\60\7\23"+
-    "\17\0\1\23\2\0\1\22\1\0\5\23\1\61\3\23"+
-    "\1\62\7\23\17\0\1\23\2\0\1\22\1\0\17\23"+
-    "\1\63\1\23\17\0\1\23\2\0\1\22\1\0\6\23"+
-    "\1\64\12\23\17\0\1\36\44\0\1\40\4\0\21\40"+
-    "\23\0\1\65\43\0\1\66\44\0\1\67\41\0\1\40"+
-    "\4\0\10\40\1\70\1\71\7\40\17\0\1\40\4\0"+
-    "\4\40\1\72\14\40\17\0\1\40\4\0\6\40\1\73"+
-    "\12\40\3\0\2\54\1\0\1\54\1\74\40\54\37\0"+
-    "\1\75\21\0\1\23\2\0\1\22\1\0\15\23\1\76"+
-    "\3\23\17\0\1\23\2\0\1\22\1\0\3\23\1\77"+
-    "\15\23\17\0\1\23\2\0\1\22\1\0\16\23\1\100"+
-    "\2\23\17\0\1\23\2\0\1\22\1\0\7\23\1\101"+
-    "\11\23\17\0\1\40\4\0\15\40\1\102\3\40\17\0"+
-    "\1\40\4\0\3\40\1\103\15\40\17\0\1\40\4\0"+
-    "\13\40\1\104\5\40\17\0\1\40\4\0\4\40\1\105"+
-    "\14\40\3\0\2\54\1\0\1\54\1\106\40\54\14\0"+
-    "\1\23\2\0\1\22\1\0\4\23\1\107\14\23\17\0"+
-    "\1\23\2\0\1\22\1\0\10\23\1\110\10\23\17\0"+
-    "\1\40\4\0\4\40\1\111\14\40\17\0\1\40\4\0"+
-    "\4\40\1\112\14\40\17\0\1\40\4\0\11\40\1\113"+
-    "\7\40\17\0\1\23\2\0\1\22\1\0\4\23\1\114"+
-    "\14\23\17\0\1\40\4\0\1\115\20\40\17\0\1\40"+
-    "\4\0\16\40\1\116\2\40\3\0";
+    "\1\23\2\0\1\22\1\0\4\23\1\53\14\23\17\0"+
+    "\1\23\2\0\1\22\1\0\10\23\1\54\1\55\7\23"+
+    "\17\0\1\23\2\0\1\22\1\0\5\23\1\56\3\23"+
+    "\1\57\7\23\17\0\1\23\2\0\1\22\1\0\17\23"+
+    "\1\60\1\23\17\0\1\23\2\0\1\22\1\0\6\23"+
+    "\1\61\12\23\17\0\1\35\44\0\1\37\4\0\21\37"+
+    "\23\0\1\62\43\0\1\63\44\0\1\64\41\0\1\37"+
+    "\4\0\10\37\1\65\1\66\7\37\17\0\1\37\4\0"+
+    "\4\37\1\67\14\37\17\0\1\37\4\0\6\37\1\70"+
+    "\12\37\3\0\2\51\1\0\1\51\1\71\40\51\37\0"+
+    "\1\72\21\0\1\23\2\0\1\22\1\0\15\23\1\73"+
+    "\3\23\17\0\1\23\2\0\1\22\1\0\3\23\1\74"+
+    "\15\23\17\0\1\23\2\0\1\22\1\0\16\23\1\75"+
+    "\2\23\17\0\1\23\2\0\1\22\1\0\7\23\1\76"+
+    "\11\23\17\0\1\37\4\0\15\37\1\77\3\37\17\0"+
+    "\1\37\4\0\3\37\1\100\15\37\17\0\1\37\4\0"+
+    "\13\37\1\101\5\37\17\0\1\37\4\0\4\37\1\102"+
+    "\14\37\3\0\2\51\1\0\1\51\1\103\40\51\14\0"+
+    "\1\23\2\0\1\22\1\0\4\23\1\104\14\23\17\0"+
+    "\1\23\2\0\1\22\1\0\10\23\1\105\10\23\17\0"+
+    "\1\37\4\0\4\37\1\106\14\37\17\0\1\37\4\0"+
+    "\4\37\1\107\14\37\17\0\1\37\4\0\11\37\1\110"+
+    "\7\37\17\0\1\23\2\0\1\22\1\0\4\23\1\111"+
+    "\14\23\17\0\1\37\4\0\1\112\20\37\17\0\1\37"+
+    "\4\0\16\37\1\113\2\37\3\0";
 
   private static int [] zzUnpacktrans() {
     int [] result = new int[1702];
@@ -256,12 +255,12 @@ class LexicalAnalyzer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\7\0\1\11\1\1\1\11\4\1\4\11\6\1\5\11"+
-    "\1\1\1\11\1\1\1\11\6\1\4\11\2\0\7\1"+
-    "\3\11\4\1\1\0\1\11\21\1";
+    "\7\0\1\11\1\1\1\11\4\1\4\11\6\1\4\11"+
+    "\1\1\1\11\7\1\3\11\2\0\7\1\3\11\4\1"+
+    "\1\0\1\11\21\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[78];
+    int [] result = new int[75];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -339,23 +338,13 @@ class LexicalAnalyzer {
   private boolean zzEOFDone;
 
   /* user code: */
-    public static HashMap<String, Integer> variables = new HashMap<>(); // Symbol table
-    public static int parenCount = 0; // Counter for parentheses
-    public static int braceCount = 0; // Counter for braces
+    public static HashMap<String, Integer> variables = new HashMap<>();
+    public static String currentVar = "";
 
     public void printSymbolTable() {
         System.out.println("\nVariables");
         for (Map.Entry<String, Integer> entry : variables.entrySet()) {
             System.out.println(entry.getKey() + "\t" + entry.getValue());
-        }
-    }
-
-    public void checkBrackets() {
-        if (parenCount != 0) {
-            throw new Error("Unmatched parentheses detected.");
-        }
-        if (braceCount != 0) {
-            System.err.println("Error: Unmatched braces detected.");
         }
     }
 
@@ -766,8 +755,7 @@ class LexicalAnalyzer {
 
       if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
         zzAtEOF = true;
-          {     checkBrackets();
-    printSymbolTable();
+          {     printSymbolTable();
 	return new Symbol(LexicalUnit.EOS, yyline, yycolumn);
  }
       }
@@ -777,47 +765,47 @@ class LexicalAnalyzer {
             { throw new Error("Unknown symbol detected " + (yyline + 1) + ", column " + (yycolumn + 1) + ": '" + yytext() + "'");
             }
           // fall through
-          case 39: break;
+          case 36: break;
           case 2:
             { /* Ignore whitespace */
             }
           // fall through
-          case 40: break;
+          case 37: break;
           case 3:
             { System.out.print(yytext());
             }
           // fall through
-          case 41: break;
+          case 38: break;
           case 4:
             { /* Ignore short comments */
             }
           // fall through
-          case 42: break;
+          case 39: break;
           case 5:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.PROGNAME, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 43: break;
+          case 40: break;
           case 6:
-            { parenCount++; System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext()));
+            { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 44: break;
+          case 41: break;
           case 7:
             { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 45: break;
+          case 42: break;
           case 8:
             { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 46: break;
+          case 43: break;
           case 9:
             { yybegin(ARITHMETIC); System.out.println(new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 47: break;
+          case 44: break;
           case 10:
             { if (!variables.containsKey(yytext())) {
                                 variables.put(yytext(), yyline+1);
@@ -825,167 +813,132 @@ class LexicalAnalyzer {
                             System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 48: break;
+          case 45: break;
           case 11:
-            { parenCount--;
-                           if (parenCount < 0) {
-                               throw new Error("Unmatched parentheses detected.");
-                           } else {
-                               System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
-                          }
-            }
-          // fall through
-          case 49: break;
-          case 12:
             { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 50: break;
-          case 13:
+          case 46: break;
+          case 12:
             { System.out.println(new Symbol(LexicalUnit.PLUS, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 51: break;
-          case 14:
+          case 47: break;
+          case 13:
             { System.out.println(new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 52: break;
-          case 15:
+          case 48: break;
+          case 14:
             { System.out.println(new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 53: break;
-          case 16:
+          case 49: break;
+          case 15:
             { System.out.println(new Symbol(LexicalUnit.NUMBER, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 54: break;
-          case 17:
+          case 50: break;
+          case 16:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 55: break;
-          case 18:
-            { parenCount--;
-                            if (parenCount < 0) {
-                                throw new Error("Unmatched parentheses detected.");
-                            } else {
-                                System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
-                            }
-            }
-          // fall through
-          case 56: break;
-          case 19:
+          case 51: break;
+          case 17:
             { System.out.println(new Symbol(LexicalUnit.SMALLER, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 57: break;
-          case 20:
-            { braceCount++; System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext()));
+          case 52: break;
+          case 18:
+            { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 58: break;
-          case 21:
+          case 53: break;
+          case 19:
             { System.out.println(new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 59: break;
-          case 22:
-            { braceCount--;
-                            if (braceCount < 0) {
-                                throw new Error("Unmatched braces detected.");
-                            } else {
-                                System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext()));
-                           }
+          case 54: break;
+          case 20:
+            { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 60: break;
-          case 23:
-            { parenCount--;
-                           if (parenCount < 0) {
-                               throw new Error("Unmatched parentheses detected.");
-                           } else {
-                               System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
-                           }
-            }
-          // fall through
-          case 61: break;
-          case 24:
+          case 55: break;
+          case 21:
             { System.out.println(new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 62: break;
-          case 25:
+          case 56: break;
+          case 22:
             { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.IF, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 63: break;
-          case 26:
+          case 57: break;
+          case 23:
             { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.INPUT, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 64: break;
-          case 27:
+          case 58: break;
+          case 24:
             { System.out.println(new Symbol(LexicalUnit.IMPLIES, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 65: break;
-          case 28:
+          case 59: break;
+          case 25:
             { System.out.println(new Symbol(LexicalUnit.SMALEQ, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 66: break;
-          case 29:
+          case 60: break;
+          case 26:
             { System.out.println(new Symbol(LexicalUnit.EQUAL, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 67: break;
-          case 30:
+          case 61: break;
+          case 27:
             { yybegin(PROGRAM); System.out.println(new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 68: break;
-          case 31:
+          case 62: break;
+          case 28:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.END, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 69: break;
-          case 32:
+          case 63: break;
+          case 29:
             { yybegin(INPUT_OUTPUT); System.out.println(new Symbol(LexicalUnit.OUTPUT, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 70: break;
-          case 33:
+          case 64: break;
+          case 30:
             { /* Ignore comments */
             }
           // fall through
-          case 71: break;
-          case 34:
+          case 65: break;
+          case 31:
             { System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 72: break;
-          case 35:
+          case 66: break;
+          case 32:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.ELSE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 73: break;
-          case 36:
+          case 67: break;
+          case 33:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.THEN, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 74: break;
-          case 37:
+          case 68: break;
+          case 34:
             { yybegin(CONDITION); System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 75: break;
-          case 38:
+          case 69: break;
+          case 35:
             { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.REPEAT, yyline, yycolumn, yytext()));
             }
           // fall through
-          case 76: break;
+          case 70: break;
           default:
             zzScanError(ZZ_NO_MATCH);
         }
