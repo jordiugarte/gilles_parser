@@ -37,6 +37,7 @@ Number       = [0-9]+
 Whitespace   = [ \t\r\n]+
 Comment      = "!!"[^\n]*"!!"
 ShortComment = "\$"[^\n]*
+UnclosedComment = "!!"[^\n]*
 
 /* Lexer rules */
 %%
@@ -44,6 +45,7 @@ ShortComment = "\$"[^\n]*
   {Whitespace}           { /* Ignore whitespace */ }
   {Comment}              { /* Ignore comments */ }
   {ShortComment}         { /* Ignore short comments */ }
+  {UnclosedComment}      { throw new Error("Unclosed comment at line " + (yyline + 1) + ", column " + (yycolumn + 1)); }
   "LET"                  { yybegin(PROGRAM); System.out.println(new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext())); }
 }
 

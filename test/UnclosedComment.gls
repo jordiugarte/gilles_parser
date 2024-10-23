@@ -1,4 +1,4 @@
-!! Random GIGO with ELSE as a VarName !!
+!! Unclosed comment
 
 LET Random_Gigo BE
   IN(a):
