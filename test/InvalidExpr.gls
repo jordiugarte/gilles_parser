@@ -1,6 +1,0 @@
-LET invalidExpr BE
-  WHILE {0 < b REPEAT:
-    OUT(0:
-    END:
-  OUT(x):
-END
