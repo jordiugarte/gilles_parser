@@ -1,9 +1,7 @@
 *.class
 *.java~
-*.jar
-/src/LexicalAnalyzer.java
+./src/LexicalAnalyzer.java
 
 # IntelliJ IDEA
 .idea/
 *.iml
-*.jar
