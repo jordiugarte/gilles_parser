@@ -5,16 +5,35 @@
  % Main Body Chapters
     \section{Part 1}
     \subsection{Lexical Analyzer}
-	The lexical analyzer is responsible for scanning the source code, identifying lexical units,
+	A lexical analyzer is responsible for scanning the source code, identifying lexical units,
 	and managing a symbol table essential for further compilation stages.
-	The lexical analyzer is implemented using JFlex, a lexical analyzer generator for Java.
+	The lexical analyzer for this project will be implemented using JFlex, a lexical analyzer generator for Java.
 	The JFlex file \texttt{LexicalAnalyzer.flex} contains the regular expressions that define the lexical units of the GILLES language.
 	The JFlex tool is used to generate the Java source code for the lexical analyzer.
 	The generated Java source code is then compiled and executed to analyze the source code of GILLES programs.
 	The lexical analyzer reads the source code character by character, identifies the lexical units, and stores them in the symbol table.
 	The symbol table is a data structure that stores information about the lexical units, such as their type, value, and position in the source code.
-	The lexical analyzer also handles errors in the source code, such as invalid characters or tokens, and reports them to the user, if an unrecognised symbol is recognised we throw an \("\)Unknown symbol detected\("\) error.
+	It also handles errors in the source code, such as invalid characters or tokens, and reports them to the user. If an unrecognised symbol is recognised, it throws an \("\)Unknown symbol detected\("\) error.
 	The lexical analyzer is of course the first essential component of the compiler, as it provides the input for the parser, which analyzes the syntactic structure of the source code.\\
+
+ \section{To be, or not to be... stateful}
+
+While developing this first part of the parser, the lexer, we came across a debate between stateful vs. stateless lexers. The decision to implement a stateful lexer arose from the need to handle context-sensitive tokens, manage nested constructs such as conditionals and loops, and simplify the parser's workload by ensuring correct tokenization based on context.
+
+In this project, we made the deliberate decision to maintain state:
+
+\begin{itemize}
+    \item \textbf{Context-Sensitive Tokens:} Tokens such as \texttt{ELSE} and \texttt{END} have specific meanings only within certain blocks, such as \texttt{IF-THEN-ELSE} or loops. A stateful lexer ensures these tokens are recognized and handled correctly based on their context, preventing misinterpretation.
+    
+    \item \textbf{Managing Complex Lexical Structures:} Nested or multi-line constructs, such as conditionals, require the lexer to switch modes. By maintaining states, the lexer can differentiate between normal code and special cases, such as conditional expressions (which may themselves be complex).
+    
+    \item \textbf{Simplifying Parser Responsibilities:} By resolving some context-specific tokenization issues at the lexical stage, the lexer reduces complexity for the parser. This allows the parser to focus on building the syntactic structure without handling low-level tokenization issues.
+
+    \item \textbf{Performance Optimisation:} Identifying errors early on in the lexical analysis stage helps point out the issues to users as soon as possible. Since we have a grammar to adhere to already provided, we thought it cogent to have some compliance to the rules there.
+\end{itemize}
+
+We also recognise that there could be a need to simplify these states once work is shifted to the parser - we can revisit this discussion at a later stage to address concerns, or if the lexer begins to have more responsibility than it should.
+
 
 	\subsection{Regular Expressions used}
 	Following the grammar rules, the following regular expressions were used to define the lexical units of the GILLES language:
@@ -23,8 +42,9 @@
 		&\text{VarName}      = [a-zA-Z\_][a-zA-Z0-9\_]* \\
 		&\text{Number}       = [0-9]+ \\
 		&\text{Whitespace}   = [ \text{\textbackslash} t\text{\textbackslash} r\text{\textbackslash} n]+ \\
-		&\text{Comment}      = "!!"[^\text{\textbackslash} n]* \\
-		&\text{ShortComment} = "\$"[^\text{\textbackslash} n]*
+		&\text{Comment}      = "!!"[^\text{\textbackslash} n]*"!!" \\
+		&\text{ShortComment} = "\$"[^\text{\textbackslash} n]* \\
+  &\text{UnclosedComment}      = "!!"[^\text{\textbackslash} n]*\\
 	\end{align*}
     \begin{table}[h]
 		\centering
@@ -187,7 +207,7 @@ System.out.println(new Symbol(LexicalUnit.PROGNAME, yyline, yycolumn, yytext()))
 		\caption{Condition block implementation}
 	\end{table}
  
-	Notice also here that we do not have \">\" (GREATER\_THAN) as a token, this is because it is not used in the grammar (possibly left out intentionally?).\\
+	Notice also here that we do not have ">" (GREATER\_THAN) as a token, this is because it is not used in the grammar (possibly left out intentionally?).\\
 
 	\subsubsection{Assignment Statements}
 	The assignment of values to variables is handled by recognizing both \texttt{VarName = ExprArith} as defined in the grammar:
@@ -363,6 +383,7 @@ System.out.println(new Symbol(LexicalUnit.WHILE, yyline, yycolumn, yytext())); }
 	\end{table}
 
 	This ensures that the parsing of valid tokens, such as program names or arithmetic expressions, is unaffected by whitespace or comments.\\
+ \subsubsection{Nested Multi-Line Comments}
 	The reason that nested comments are not supported is that it is explicitly not part of the grammar, but also becasue nested comments are challenging to track, i.e., it
 	is difficult to accurately track when a comment ends.\\
 
