@@ -7,7 +7,7 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{ULBreport}
-\LoadClass[a4paper,10pt]{report}
+\LoadClass[a4paper,11pt]{report}
 
 %%%%Structure%%%%
 
