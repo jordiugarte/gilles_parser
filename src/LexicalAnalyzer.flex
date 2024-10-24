@@ -11,8 +11,9 @@ import java.util.Map;
 %standalone
 
 %{
-    public static HashMap<String, Integer> variables = new HashMap<>();
-    public static String currentVar = "";
+    public static HashMap<String, Integer> variables = new HashMap<>(); // Symbol table
+    public static int parenCount = 0; // Counter for parentheses
+    public static int braceCount = 0; // Counter for braces
 
     public void printSymbolTable() {
         System.out.println("\nVariables");
@@ -20,9 +21,19 @@ import java.util.Map;
             System.out.println(entry.getKey() + "\t" + entry.getValue());
         }
     }
+
+    public void checkBrackets() {
+        if (parenCount != 0) {
+            throw new Error("Error: Unmatched parentheses detected.");
+        }
+        if (braceCount != 0) {
+            throw new Error("Error: Unmatched braces detected.");
+        }
+    }
 %}
 
 %eofval{
+    checkBrackets();
     printSymbolTable();
 	return new Symbol(LexicalUnit.EOS, yyline, yycolumn);
 %eofval}
@@ -37,7 +48,6 @@ Number       = [0-9]+
 Whitespace   = [ \t\r\n]+
 Comment      = "!!"[^\n]*"!!"
 ShortComment = "\$"[^\n]*
-UnclosedComment = "!!"[^\n]*
 
 /* Lexer rules */
 %%
@@ -45,7 +55,6 @@ UnclosedComment = "!!"[^\n]*
   {Whitespace}           { /* Ignore whitespace */ }
   {Comment}              { /* Ignore comments */ }
   {ShortComment}         { /* Ignore short comments */ }
-  {UnclosedComment}      { throw new Error("Unclosed comment at line " + (yyline + 1) + ", column " + (yycolumn + 1)); }
   "LET"                  { yybegin(PROGRAM); System.out.println(new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext())); }
 }
 
@@ -76,11 +85,9 @@ UnclosedComment = "!!"[^\n]*
                             }
                             System.out.println(new Symbol(LexicalUnit.VARNAME, yyline, yycolumn, yytext()));
                          }
-  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  "("                    { parenCount++; System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
   ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
 }
-
-
 
 /* Conditionals and loops */
 <CONDITION> {
@@ -101,18 +108,39 @@ UnclosedComment = "!!"[^\n]*
   "<"                    { System.out.println(new Symbol(LexicalUnit.SMALLER, yyline, yycolumn, yytext())); }
   "|"                    { System.out.println(new Symbol(LexicalUnit.PIPE, yyline, yycolumn, yytext())); }
   "->"                   { System.out.println(new Symbol(LexicalUnit.IMPLIES, yyline, yycolumn, yytext())); }
-  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  "("                    { parenCount++; System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    {
+                            parenCount--;
+                            if (parenCount < 0) {
+                                throw new Error("Unmatched parentheses detected.");
+                            } else {
+                                System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
+                            }
+                         }
   ":"                    { System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
-  "{"                    { System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
-  "}"                    { System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext())); }
+  "{"                    { braceCount++; System.out.println(new Symbol(LexicalUnit.LBRACK, yyline, yycolumn, yytext())); }
+  "}"                    {
+                            braceCount--;
+                            if (braceCount < 0) {
+                                throw new Error("Unmatched braces detected.");
+                            } else {
+                                System.out.println(new Symbol(LexicalUnit.RBRACK, yyline, yycolumn, yytext()));
+                           }
+                         }
 }
 
 /* Input/Output instructions */
 <INPUT_OUTPUT> {
   {Whitespace}           { /* Ignore whitespace */ }
-  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  "("                    { parenCount++; System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    {
+                           parenCount--;
+                           if (parenCount < 0) {
+                               throw new Error("Unmatched parentheses detected.");
+                           } else {
+                               System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
+                           }
+                         }
   {VarName}              {
                             if (!variables.containsKey(yytext())) {
                                 variables.put(yytext(), yyline+1);
@@ -137,8 +165,14 @@ UnclosedComment = "!!"[^\n]*
   "-"                    { System.out.println(new Symbol(LexicalUnit.MINUS, yyline, yycolumn, yytext())); }
   "*"                  { System.out.println(new Symbol(LexicalUnit.TIMES, yyline, yycolumn, yytext())); }
   "/"                    { System.out.println(new Symbol(LexicalUnit.DIVIDE, yyline, yycolumn, yytext())); }
-  "("                    { System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
-  ")"                    { System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext())); }
+  "("                    { parenCount++; System.out.println(new Symbol(LexicalUnit.LPAREN, yyline, yycolumn, yytext())); }
+  ")"                    { parenCount--;
+                           if (parenCount < 0) {
+                               throw new Error("Unmatched parentheses detected.");
+                           } else {
+                               System.out.println(new Symbol(LexicalUnit.RPAREN, yyline, yycolumn, yytext()));
+                          }
+                         }
   ":"                    { yybegin(CODE); System.out.println(new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext())); }
 }
 

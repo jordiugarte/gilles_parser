@@ -10,7 +10,7 @@ LET Random_Gigo BE
         d = a+b+c:
         IF {d == 0} THEN
           OUT(d):
-        else $ This will be a variable since it's lower case and we think it's
+        ELSE $ ELSE is a VarName here because it is not a keyword in this part of the grammar
           OUT(b):
         END:
       END:
