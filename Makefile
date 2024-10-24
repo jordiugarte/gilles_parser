@@ -32,12 +32,12 @@ build:
 jar:
 	${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.mf -C ${SRC_DIR} .
 
-pdf:
-	${PDFLATEX} -output-directory=${DOC_DIR} ${LATEX_FILE}
-	rm -f ${DOC_DIR}/*.aux
-	rm -f ${DOC_DIR}/*.log
-	rm -f ${DOC_DIR}/*.out
-	rm -f ${DOC_DIR}/*.toc
+#pdf:
+#	${PDFLATEX} -output-directory=${DOC_DIR} ${LATEX_FILE}
+#	rm -f ${DOC_DIR}/*.aux
+#	rm -f ${DOC_DIR}/*.log
+#	rm -f ${DOC_DIR}/*.out
+#	rm -f ${DOC_DIR}/*.toc
 
 .PHONY: all build jar pdf test
 
