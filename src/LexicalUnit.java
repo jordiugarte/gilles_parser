@@ -15,7 +15,7 @@ public enum LexicalUnit{
     /** <code>END</code> */
     END,
     /** <code>:</code> */
-    COLUMN,
+    COLON,
     /** <code>=</code> */
     ASSIGN,
     /** <code>(</code> */

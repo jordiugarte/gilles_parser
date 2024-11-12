@@ -65,7 +65,7 @@ UpToEnd        = ({Any}{EndLine}) | ({EndLine})
   "LET"             {return new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext());}
   "BE"              {return new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext());}
   "END"             {return new Symbol(LexicalUnit.END, yyline, yycolumn, yytext());}
-  ":"               {return new Symbol(LexicalUnit.COLUMN, yyline, yycolumn, yytext());}
+  ":"               {return new Symbol(LexicalUnit.COLON, yyline, yycolumn, yytext());}
 // Assignation
   "="                {return new Symbol(LexicalUnit.ASSIGN, yyline, yycolumn, yytext());}
 // Parenthesis
