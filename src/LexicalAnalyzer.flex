@@ -52,15 +52,15 @@ UpToEnd        = ({Any}{EndLine}) | ({EndLine})
 
 <LONGCOMMENTS> {
 // End of comment
-	"!!"			{yybegin(YYINITIAL);} // go back to analysis
-  <<EOF>>          {throw new PatternSyntaxException("A comment is never closed.",yytext(),yyline);}
-	[^]					     {} //ignore any character
+  "!!"			{yybegin(YYINITIAL);} // go back to analysis
+  <<EOF>>          {throw new PatternSyntaxException("A comment is never closed.", yytext(), yyline);}
+  [^]					     {} //ignore any character
 }
 
 <YYINITIAL> {
 // Comments
-    "!!"              {yybegin(LONGCOMMENTS);} // go to ignore mode
-    "$"{UpToEnd}     {} // go to ignore mode
+  "!!"              {yybegin(LONGCOMMENTS);} // go to ignore mode
+  "$"{UpToEnd}     {} // go to ignore mode
 // Code delimiters
   "LET"             {return new Symbol(LexicalUnit.LET, yyline, yycolumn, yytext());}
   "BE"              {return new Symbol(LexicalUnit.BE, yyline, yycolumn, yytext());}
@@ -102,5 +102,5 @@ UpToEnd        = ({Any}{EndLine}) | ({EndLine})
   {ProgName}           {return new Symbol(LexicalUnit.PROGNAME,yyline, yycolumn,yytext());}
   {VarName}           {return new Symbol(LexicalUnit.VARNAME,yyline, yycolumn,yytext());}
   {Separator}         {}// ignore spaces
-  [^]                 {throw new PatternSyntaxException("Unmatched token, out of symbols",yytext(),yyline);} // unmatched token gives an error
+  [^]                 {throw new PatternSyntaxException("Unmatched token, out of symbols", yytext(), yyline);} // unmatched token gives an error
 }

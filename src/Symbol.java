@@ -189,4 +189,11 @@
         }
         return res;
     }
- }
+
+	public String toTexString() {
+		if(this.isTerminal()){
+			return this.type.toString();
+		}
+		return this.value.toString();
+	}
+}

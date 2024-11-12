@@ -1,4 +1,4 @@
-import java.util.Objects;
+import java.util.List;
 
 class Main {
     private static String encodingName = "UTF-8";
@@ -10,14 +10,13 @@ class Main {
             java.io.Reader reader;
             reader = new java.io.InputStreamReader(input, encodingName);
             lexer = new LexicalAnalyzer(reader);
-            Symbol token;
-            while (!lexer.yyatEOF()) {
-                token = lexer.nextToken();
-                if (token == null || token.getType() == LexicalUnit.EOS) {
-                    break;
-                }
-                System.out.println(token);
-            }
+            Parser parser = new Parser(lexer);
+            ParseTree tree = parser.parse();
+            List<Integer> derivation = parser.getDerivation();
+            System.out.println("Derivation: " + derivation);
+            System.out.println(tree.toLaTexTree());
+            System.out.println(tree.toTikZ());
+            System.out.println(tree.toLaTeX());
         } catch (Exception e) {
             e.printStackTrace();
         }
