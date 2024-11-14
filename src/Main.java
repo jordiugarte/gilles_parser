@@ -37,6 +37,8 @@ class Main {
             System.out.println(derivation.stream().map(Object::toString).collect(Collectors.joining(" ")));
         } catch (Exception e) {
             System.err.println(e.getMessage());
+            // Exit with error so that the Makefile can catch it!
+            System.exit(1);
         }
     }
 

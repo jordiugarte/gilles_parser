@@ -23,18 +23,10 @@ public enum NonTerminal {
     EXPRESSION("Expr"),
     /** Expression' */
     EXPRESSIONPRIME("Expr'"),
-    /** Plus */
-    PLUS("+"),
-    /** Minus */
-    MINUS("-"),
     /** Term */
     TERM("Term"),
     /** Term' */
     TERMPRIME("Term'"),
-    /** Mul */
-    MUL("*"),
-    /** Div */
-    DIV("/"),
     /** Factor */
     UNIT("Unit"),
     /** Condition */
@@ -43,6 +35,17 @@ public enum NonTerminal {
     CONDITIONPRIME("Cond'"),
     /** Comparison */
     COMPARISON("Comp"),
+
+    /* The following are technically not non-terminals, though we are just using this enum
+       for the sake of pretty printing; could move to its own enum named better */
+    /** Plus */
+    PLUS("+"),
+    /** Minus */
+    MINUS("-"),
+    /** Mul */
+    MUL("*"),
+    /** Div */
+    DIV("/"),
     /** Epsilon */
     EPSILON("");
 
@@ -56,9 +59,7 @@ public enum NonTerminal {
         return value;
     }
 
-    /*
-    Overriding toString() will let us get the value of the enum directly!
-     */
+    // Overriding toString() will let us get the value of the enum directly!
     @Override
     public String toString() {
         return getValue();

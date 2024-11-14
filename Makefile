@@ -28,12 +28,16 @@ DOC_DIR = ${PWD}/doc
 all: build jar
 
 build:
-	${JFLEX} ${SRC_DIR}/LexicalAnalyzer.flex
-	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/LexicalAnalyzer.java
-	${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/Main.java
+	@echo "Building JFlex and Java files..."
+	@${JFLEX} ${SRC_DIR}/LexicalAnalyzer.flex
+	@${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/LexicalAnalyzer.java
+	@${JAVAC} -cp ${SRC_DIR} ${SRC_DIR}/Main.java
+	@echo "Build successful!"
 
 jar:
-	${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.mf -C ${SRC_DIR} .
+	@echo "Creating JAR file..."
+	@${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.mf -C ${SRC_DIR} .
+	@echo "JAR file created!"
 
 .PHONY: all build jar test
 
@@ -43,7 +47,7 @@ test:
 	@# If there was a .tex file specified, then generate the LaTeX and PDF files, else we're done!
 	@$(if ${OUTPUT_TEX_FILE}, $(PDFLATEX) -output-directory=$(MORE_DIR) $(OUTPUT_TEX_FILE) > /dev/null 2>&1)
 	@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf)
-	$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf")
+	@#$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf")
 
 clean:
 	# Remove all .class and auto-generated files
@@ -58,4 +62,4 @@ clean:
 	rm -f ${MORE_DIR}/*
 
 	# Remove all PDFs except the report.pdf (parse tree PDFs)
-	find ${DOC_DIR} -type f -name '*.pdf' ! -name 'report.pdf' -exec rm -f {} +
+	find ${DOC_DIR} -type f -name '*.pdf' ! -name 'Report.pdf' -exec rm -f {} +
