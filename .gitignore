@@ -1,6 +1,6 @@
 *.class
 *.java~
-/src/LexicalAnalyzer.java
+src/LexicalAnalyzer.java
 
 # IntelliJ IDEA
 .idea/

@@ -49,7 +49,9 @@ public class Parser {
         if (currentToken.getType() == expected) {
             currentToken = lexer.nextToken(); // Move to the next token
         } else {
-            error("Expected " + expected + " but found " + currentToken.getType());
+            error("Expected " + expected + " but found " + currentToken.getType()
+                    + " at line " + currentToken.getLine() + " column " + currentToken.getColumn()
+                    + " at rule " + derivation.get(derivation.size() - 1));
         }
     }
 
@@ -201,6 +203,7 @@ public class Parser {
             // Parse <Code>
             ParseTree codeTree = code();
             // Match END
+            // System.out.println("REACHED HERE");
             match(LexicalUnit.END);
             // Build parse tree node
             List<ParseTree> children = Arrays.asList(

@@ -2,14 +2,13 @@
 
 LET Fibonacci BE
   IN(n):                    $ Input number n
-  IF {n == 0} THEN
-    OUT(0):                 $ Base case: Fibonacci(0) = 0
-  ELSE IF {n == 1} THEN
-    OUT(1):                 $ Base case: Fibonacci(1) = 1
+  IF {n == 1} THEN
+    ret = 1:
+    OUT(ret):                 $ Base case: Fibonacci(1) = 1
   ELSE
     a = 0:              $ Variable for Fibonacci(n-2)
     b = 1:              $ Variable for Fibonacci(n-1)
-    temp:               $ Temporary variable to store the next Fibonacci number
+    temp = 0:               $ Temporary variable to store the next Fibonacci number
     WHILE {1 < n} REPEAT    $ Loop to calculate Fibonacci(n)
       temp = b:             $ Store Fibonacci(n-1) in temp
       b = a + b:            $ Fibonacci(n) = Fibonacci(n-1) + Fibonacci(n-2)

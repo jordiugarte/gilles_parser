@@ -1,9 +1,8 @@
 !! Sum of two numbers!!
 
-LET sum BE
+LET Sum BE
   IN(a):
   IN(b):
-    c = a+b:
-  END:
+  c = a+b:
   OUT(c):
 END

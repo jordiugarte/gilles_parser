@@ -1,9 +1,11 @@
 $ If-else statement test
-LET IfElse BE:
+LET IfElse BE
   IN(n):
   IF {n == 0} THEN
-    OUT(0):
+    a = 0:
+    OUT(a):
   ELSE
     OUT(n):
   END:
 END
+
