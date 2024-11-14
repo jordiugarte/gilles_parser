@@ -11,15 +11,18 @@ SRC_DIR = src
 PACKAGE_DIR = ${SRC_DIR} # Unused
 
 DIST_DIR = ${PWD}/dist
+MORE_DIR = ${PWD}/more
 MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
 
-JAR_NAME = $(DIST_DIR)/part1.jar
+JAR_NAME = $(DIST_DIR)/part2.jar
 
 TEST_DIR = ${PWD}/test
 TEST_FILE ?= ${TEST_DIR}/Euclid.gls
 
+#OUTPUT_TEX_FILE ?= ${MORE_DIR}/parseTreeOutput.tex
+OUTPUT_TEX_FILENAME = parseTreeOutput.tex
+
 DOC_DIR = ${PWD}/doc
-LATEX_FILE = ${DOC_DIR}/latex/parser_part1/main.tex
 
 # Targets
 all: build jar
@@ -32,17 +35,19 @@ build:
 jar:
 	${JAR} cvfm ${JAR_NAME} ${SRC_DIR}/manifest.mf -C ${SRC_DIR} .
 
-#pdf:
-#	${PDFLATEX} -output-directory=${DOC_DIR} ${LATEX_FILE}
-#	rm -f ${DOC_DIR}/*.aux
-#	rm -f ${DOC_DIR}/*.log
-#	rm -f ${DOC_DIR}/*.out
-#	rm -f ${DOC_DIR}/*.toc
+.PHONY: all build jar test
 
-.PHONY: all build jar pdf test
+#test:
+#	@java -jar ${JAR_NAME} -wt ${OUTPUT_TEX_FILE} ${TEST_FILE}
+#	@$(PDFLATEX) -output-directory=$(MORE_DIR) $(OUTPUT_TEX_FILE) > /dev/null 2>&1
+#	@mv ${MORE_DIR}/parseTreeOutput.pdf ${DOC_DIR}/parseTreeOutput_part2.pdf
+#	@echo "Parse tree saved to $(DOC_DIR)/parseTreeOutput_part2.pdf"
 
 test:
-	@java -jar ${JAR_NAME} ${TEST_FILE}
+	@java -jar ${JAR_NAME} $(if ${OUTPUT_TEX_FILE},-wt ${OUTPUT_TEX_FILE}) ${TEST_FILE}
+	@$(if ${OUTPUT_TEX_FILE}, $(PDFLATEX) -output-directory=$(MORE_DIR) $(OUTPUT_TEX_FILE) > /dev/null 2>&1)
+	@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf)
+	$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf")
 
 clean:
 	rm -f ${SRC_DIR}/*.class
