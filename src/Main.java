@@ -43,9 +43,8 @@ class Main {
     private static void saveToFile(String fileName, String content) {
         try (PrintWriter fileWriter = new PrintWriter(fileName)) {
             fileWriter.print(content);
-            // System.out.println("LaTex output saved to " + fileName);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error while saving LaTeX file: " + e.getMessage());
         }
     }
 }

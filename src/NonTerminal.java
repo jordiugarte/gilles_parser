@@ -23,16 +23,20 @@ public enum NonTerminal {
     EXPRESSION("Expr"),
     /** Expression' */
     EXPRESSIONPRIME("Expr'"),
-    /** PlusMinus */
-    PLUSMINUS("PlusMinus"),
+    /** Plus */
+    PLUS("+"),
+    /** Minus */
+    MINUS("-"),
     /** Term */
     TERM("Term"),
     /** Term' */
     TERMPRIME("Term'"),
-    /** MulDiv */
-    MULDIV("MulDiv"),
+    /** Mul */
+    MUL("*"),
+    /** Div */
+    DIV("/"),
     /** Factor */
-    FACTOR("Factor"),
+    UNIT("Unit"),
     /** Condition */
     CONDITION("Cond"),
     /** Condition' */
@@ -57,6 +61,6 @@ public enum NonTerminal {
      */
     @Override
     public String toString() {
-        return value;
+        return getValue();
     }
 }

@@ -6,43 +6,39 @@ import java.util.List;
 
 
 public class Parser {
-    private LexicalAnalyzer lexer;
+    private final LexicalAnalyzer lexer;
+    private final List<Integer> derivation;
     private Symbol currentToken;
-    private List<Integer> derivation;
-    private boolean errorFlag;
+    private String currentTokenValue;
 
     public Parser(LexicalAnalyzer lexer) throws IOException {
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.derivation = new ArrayList<>();
-        this.errorFlag = false;
     }
 
     public List<Integer> getDerivation() {
         return derivation;
     }
 
-    public boolean getErrorFlag() {
-        return errorFlag;
-    }
-
-    public Symbol getCurrentToken() {
-        return currentToken;
-    }
-
     public ParseTree parse() throws IOException {
         ParseTree tree = program();
-        if (!errorFlag && currentToken.getType() == LexicalUnit.EOS) {
+        if (currentToken.getType() == LexicalUnit.EOS) {
             assert tree != null;
             return tree;
         }
-        System.out.println("Should never reach here really, " +
-                "error will be thrown in program() before it gets here");
+        error("Unexpected token after end of valid program: " + currentToken.getType() + " at line " + currentToken.getLine() + " column " + currentToken.getColumn());
         return null;
     }
 
     private void error(String message) {
         throw new RuntimeException("Error: " + message);
+    }
+
+    private void unexpectedToken() {
+        error("Unexpected token " + currentToken.getType()
+                + " at line " + currentToken.getLine() + " column " + currentToken.getColumn()
+                + " at rule " + derivation.get(derivation.size() - 1));
     }
 
     private void match(LexicalUnit expected) throws IOException {
@@ -78,7 +74,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.PROGRAM), children);
         } else {
-            error("Expected LET");
+            unexpectedToken();
             return null;
         }
     }
@@ -128,7 +124,7 @@ public class Parser {
             // Parse <Input>
             return input();
         } else {
-            error("Expected VARNAME, IF, WHILE, OUT or IN");
+            unexpectedToken();
             return null;
         }
     }
@@ -137,6 +133,7 @@ public class Parser {
         if (currentToken.getType() == LexicalUnit.VARNAME) {
             derivation.add(9); // Rule number [9]
             // Match [VarName]
+            Object assignmentVar = currentToken.getValue().toString();
             match(LexicalUnit.VARNAME);
             // Match =
             match(LexicalUnit.ASSIGN);
@@ -144,13 +141,13 @@ public class Parser {
             ParseTree exprArithTree = exprArith();
             // Build parse tree node
             List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME)),
+                    new ParseTree(new Symbol(LexicalUnit.VARNAME, assignmentVar)),
                     new ParseTree(new Symbol(LexicalUnit.ASSIGN)),
                     exprArithTree
             );
             return new ParseTree(new Symbol(null, NonTerminal.ASSIGNMENT), children);
         } else {
-            error("Expected VARNAME");
+            unexpectedToken();
             return null;
         }
     }
@@ -184,7 +181,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.IFSTATEMENT), children);
         } else {
-            error("Expected IF");
+            unexpectedToken();
             return null;
         }
     }
@@ -213,7 +210,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.IFTAIL), children);
         } else {
-            error("Expected END or ELSE");
+            unexpectedToken();
             return null;
         }
     }
@@ -247,7 +244,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.WHILESTATEMENT), children);
         } else {
-            error("Expected WHILE");
+            unexpectedToken();
             return null;
         }
     }
@@ -260,6 +257,7 @@ public class Parser {
             // Match (
             match(LexicalUnit.LPAREN);
             // Match [VarName]
+            currentTokenValue = currentToken.getValue().toString();
             match(LexicalUnit.VARNAME);
             // Match )
             match(LexicalUnit.RPAREN);
@@ -267,12 +265,12 @@ public class Parser {
             List<ParseTree> children = Arrays.asList(
                     new ParseTree(new Symbol(LexicalUnit.OUTPUT)),
                     new ParseTree(new Symbol(LexicalUnit.LPAREN)),
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME)),
+                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue)),
                     new ParseTree(new Symbol(LexicalUnit.RPAREN))
             );
             return new ParseTree(new Symbol(null, NonTerminal.OUTPUTSTATEMENT), children);
         } else {
-            error("Expected OUT");
+            unexpectedToken();
             return null;
         }
     }
@@ -285,6 +283,7 @@ public class Parser {
             // Match (
             match(LexicalUnit.LPAREN);
             // Match [VarName]
+            currentTokenValue = currentToken.getValue().toString();
             match(LexicalUnit.VARNAME);
             // Match )
             match(LexicalUnit.RPAREN);
@@ -292,12 +291,12 @@ public class Parser {
             List<ParseTree> children = Arrays.asList(
                     new ParseTree(new Symbol(LexicalUnit.INPUT)),
                     new ParseTree(new Symbol(LexicalUnit.LPAREN)),
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME)),
+                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue)),
                     new ParseTree(new Symbol(LexicalUnit.RPAREN))
             );
             return new ParseTree(new Symbol(null, NonTerminal.INPUTSTATEMENT), children);
         } else {
-            error("Expected IN");
+            unexpectedToken();
             return null;
         }
     }
@@ -317,7 +316,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.ARITHMETICEXPRESSION), children); // Could be NonTerminal.EXPRESSION also - Redundant rule 100%
         } else {
-            error("Expected VARNAME, NUMBER or (");
+            unexpectedToken();
             return null;
         }
     }
@@ -325,18 +324,18 @@ public class Parser {
     private ParseTree term() throws IOException {
         if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(22); // Rule number [22]
-            // Parse <Factor>
-            ParseTree factorTree = factor();
+            // Parse <Unit>
+            ParseTree unitFactorTree = unit();
             // Parse <TermTail>
             ParseTree termTailTree = termTail();
             // Build parse tree node
             List<ParseTree> children = Arrays.asList(
-                    factorTree,
+                    unitFactorTree,
                     termTailTree
             );
             return new ParseTree(new Symbol(null, NonTerminal.TERM), children);
         } else {
-            error("Expected VARNAME, NUMBER or (");
+            unexpectedToken();
             return null;
         }
     }
@@ -370,15 +369,15 @@ public class Parser {
             // Match +
             match(LexicalUnit.PLUS);
             // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.PLUSMINUS));
+            return new ParseTree(new Symbol(null, NonTerminal.PLUS));
         } else if (currentToken.getType() == LexicalUnit.MINUS) {
             derivation.add(21); // Rule number [21]
             // Match -
             match(LexicalUnit.MINUS);
             // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.PLUSMINUS));
+            return new ParseTree(new Symbol(null, NonTerminal.MINUS));
         } else {
-            error("Expected + or -");
+            unexpectedToken();
             return null;
         }
     }
@@ -388,14 +387,14 @@ public class Parser {
             derivation.add(23); // Rule number [23]
             // Parse <MulDiv>
             ParseTree mulDivTree = mulDiv();
-            // Parse <Factor>
-            ParseTree factorTree = factor();
+            // Parse <Unit>
+            ParseTree unitFactorTree = unit();
             // Parse <TermTail>
             ParseTree termTailTree = termTail();
             // Build parse tree node
             List<ParseTree> children = Arrays.asList(
                     mulDivTree,
-                    factorTree,
+                    unitFactorTree,
                     termTailTree
             );
             return new ParseTree(new Symbol(null, NonTerminal.TERMPRIME), children);
@@ -412,42 +411,44 @@ public class Parser {
             // Match *
             match(LexicalUnit.TIMES);
             // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.MULDIV));
+            return new ParseTree(new Symbol(null, NonTerminal.MUL));
         } else if (currentToken.getType() == LexicalUnit.DIVIDE) {
             derivation.add(26); // Rule number [26]
             // Match /
             match(LexicalUnit.DIVIDE);
             // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.MULDIV));
+            return new ParseTree(new Symbol(null, NonTerminal.DIV));
         } else {
-            error("Expected * or /");
+            unexpectedToken();
             return null;
         }
     }
 
-    private ParseTree factor() throws IOException {
+    private ParseTree unit() throws IOException {
         if (currentToken.getType() == LexicalUnit.MINUS) {
             derivation.add(27); // Rule number [27]
             // Parse <Minus>
-            return factor();
+            return unit();
         } else if (currentToken.getType() == LexicalUnit.VARNAME) {
             derivation.add(28); // Rule number [28]
             // Match [VarName]
+            currentTokenValue = currentToken.getValue().toString();
             match(LexicalUnit.VARNAME);
             // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME))
+            List<ParseTree> children = List.of(
+                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue))
             );
-            return new ParseTree(new Symbol(null, NonTerminal.FACTOR), children);
+            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
         } else if (currentToken.getType() == LexicalUnit.NUMBER) {
             derivation.add(29); // Rule number [29]
             // Match [Number]
+            currentTokenValue = currentToken.getValue().toString();
             match(LexicalUnit.NUMBER);
             // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.NUMBER))
+            List<ParseTree> children = List.of(
+                    new ParseTree(new Symbol(LexicalUnit.NUMBER, currentTokenValue))
             );
-            return new ParseTree(new Symbol(null, NonTerminal.FACTOR), children);
+            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
         } else if (currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(30); // Rule number [30]
             // Match (
@@ -462,9 +463,9 @@ public class Parser {
                     exprArithTree,
                     new ParseTree(new Symbol(LexicalUnit.RPAREN))
             );
-            return new ParseTree(new Symbol(null, NonTerminal.FACTOR), children);
+            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
         } else {
-            error("Expected VARNAME, NUMBER or (");
+            unexpectedToken();
             return null;
         }
     }
@@ -501,7 +502,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.CONDITION), children);
         } else {
-            error("Expected VARNAME, NUMBER, ( or |");
+            unexpectedToken();
             return null;
         }
     }
@@ -546,7 +547,7 @@ public class Parser {
             // Build parse tree node
             return new ParseTree(new Symbol(null, NonTerminal.COMPARISON));
         } else {
-            error("Expected ==, <= or <");
+            unexpectedToken();
             return null;
         }
     }

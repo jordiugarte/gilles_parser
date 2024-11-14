@@ -168,7 +168,7 @@
 	@Override
 	public String toString(){
         final String value	= this.value != null? this.value.toString() : "null";
-		if(this.isTerminal()){
+		if (this.isTerminal()) {
 			final String type		= this.type  != null? this.type.toString()  : "null";
 			return "token: "+padTo(value,12)+"\tlexical unit: "+type; // The longest keyword has length 7
 		}
@@ -191,8 +191,11 @@
     }
 
 	public String toTexString() {
-		if(this.isTerminal()){
-			return this.type.toString();
+		if (this.isTerminal()){
+			if (this.value == null){
+				return this.type.toString();
+			}
+			return this.type.toString() + ": " + this.value;
 		}
 		return this.value.toString();
 	}

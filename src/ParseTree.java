@@ -85,7 +85,7 @@ public class ParseTree {
      * using the latex code of the tree
      */
     public String toForestPicture() {
-        return "\\begin{forest}for tree={rectangle, draw, l sep=20pt}" + toLaTexTree() + ";\n\\end{forest}";
+        return "\\begin{forest}for tree={rectangle, draw, rounded corners, l sep=20pt}" + toLaTexTree() + ";\n\\end{forest}";
     }
 
     /**
