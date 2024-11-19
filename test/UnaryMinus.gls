@@ -1,0 +1,4 @@
+LET UnaryMinus BE
+  x = -1:
+  OUT(x):
+END

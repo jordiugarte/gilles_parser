@@ -302,7 +302,7 @@ public class Parser {
     }
 
     private ParseTree exprArith() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
+        if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(16); // Rule number [16] - Could remove this rule!
             derivation.add(17); // Rule number [17]
             // Parse <Term>
@@ -322,7 +322,7 @@ public class Parser {
     }
 
     private ParseTree term() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
+        if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(22); // Rule number [22]
             // Parse <Unit>
             ParseTree unitFactorTree = unit();
@@ -428,6 +428,7 @@ public class Parser {
         if (currentToken.getType() == LexicalUnit.MINUS) {
             derivation.add(27); // Rule number [27]
             // Parse <Minus>
+            match(LexicalUnit.MINUS);
             return unit();
         } else if (currentToken.getType() == LexicalUnit.VARNAME) {
             derivation.add(28); // Rule number [28]
@@ -521,7 +522,7 @@ public class Parser {
             );
             return new ParseTree(new Symbol(null, NonTerminal.CONDITIONPRIME), children);
         } else {
-            derivation.add(37); // Rule number [34]
+            derivation.add(37); // Rule number [34] (Epsilon)
             // Build parse tree node
             return new ParseTree(new Symbol(null, NonTerminal.EPSILON));
         }
