@@ -190,6 +190,11 @@
         return res;
     }
 
+	/**
+	 * Returns a string representation of the symbol in LaTeX format.
+	 *
+	 * @return a string representation of the token's value and type in LaTeX format.
+	 */
 	public String toTexString() {
 		if (this.isTerminal()){
 			if (this.value == null){

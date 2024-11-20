@@ -5,6 +5,9 @@ import java.io.Reader;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Main class for the parser.
+ */
 class Main {
     private static String encodingName = "UTF-8";
 

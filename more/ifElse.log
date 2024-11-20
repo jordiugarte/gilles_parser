@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.10.19)  19 NOV 2024 17:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.10.19)  20 NOV 2024 22:35
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**doc/tree.tex
-(./doc/tree.tex
+**doc/ifElse.tex
+(./doc/ifElse.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
 (/usr/share/texlive/texmf-dist/tex/latex/standalone/standalone.cls
@@ -528,8 +528,8 @@ Package: inlinedef 2008/07/10 v1.0 Inlined expansions within definitions
 \forest@externalize@max@outer@n=\count313
 \forest@externalize@inner@n=\count314
 )
-No file tree.aux.
-\openout1 = `tree.aux'.
+No file ifElse.aux.
+\openout1 = `ifElse.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
@@ -570,22 +570,22 @@ e
 Missing character: There is no ; in font nullfont!
 [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./more/tree.aux)
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./more/ifElse.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 37181 strings out of 474222
- 812159 string characters out of 5748732
- 2018975 words of memory out of 5000000
- 59159 multiletter control sequences out of 15000+600000
+ 31031 strings out of 474222
+ 699182 string characters out of 5748732
+ 1973975 words of memory out of 5000000
+ 53009 multiletter control sequences out of 15000+600000
  558069 words of font info for 36 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 231i,9n,196p,1584b,10370s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 181i,9n,161p,1586b,6501s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on ./more/tree.pdf (1 page, 30248 bytes).
+Output written on ./more/ifElse.pdf (1 page, 26019 bytes).
 PDF statistics:
  16 PDF objects out of 1000 (max. 8388607)
  10 compressed objects within 1 object stream

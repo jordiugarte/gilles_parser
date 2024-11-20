@@ -1,3 +1,6 @@
+/**
+ * Enum for Non-Terminals in the grammar
+ */
 public enum NonTerminal {
     /** Program */
     PROGRAM("Program"),
@@ -51,15 +54,26 @@ public enum NonTerminal {
 
     private final String value;
 
+    /**
+     * Constructor for the NonTerminal enum
+     * @param value the value of the non-terminal
+     */
     NonTerminal(String value) {
         this.value = value;
     }
 
+    /**
+     * Getter for the value of the non-terminal
+     * @return the value of the non-terminal
+     */
     public String getValue() {
         return value;
     }
 
-    // Overriding toString() will let us get the value of the enum directly!
+    /**
+     * Overriding toString() to return the value of the non-terminal
+     * @return the value of the non-terminal
+     */
     @Override
     public String toString() {
         return getValue();

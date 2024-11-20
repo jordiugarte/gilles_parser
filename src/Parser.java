@@ -3,24 +3,42 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
-
+/**
+ * Parser class for the grammar.
+ */
 public class Parser {
     private final LexicalAnalyzer lexer;
     private final List<Integer> derivation;
     private Symbol currentToken;
     private String currentTokenValue;
 
+    /**
+     * Creates a parser using the provided lexer.
+     *
+     * @param lexer the lexer to use for parsing
+     * @throws IOException if an I/O error occurs
+     */
     public Parser(LexicalAnalyzer lexer) throws IOException {
         this.lexer = lexer;
         this.currentToken = lexer.nextToken();
         this.derivation = new ArrayList<>();
     }
 
+    /**
+     * Getter for the derivation list.
+     *
+     * @return the derivation list
+     */
     public List<Integer> getDerivation() {
         return derivation;
     }
 
+    /**
+     * Parses the program.
+     *
+     * @return the parse tree of the program
+     * @throws IOException if an I/O error occurs
+     */
     public ParseTree parse() throws IOException {
         ParseTree tree = program();
         if (currentToken.getType() == LexicalUnit.EOS) {
@@ -31,16 +49,34 @@ public class Parser {
         return null;
     }
 
+    /**
+     * Prints an error message and throws a RuntimeException.
+     * @param message
+     */
     private void error(String message) {
         throw new RuntimeException("Error: " + message);
     }
 
+    /**
+     * Prints an error message for an unexpected token.
+     *
+     * This method is called when the parser encounters a token that is not expected.
+     */
     private void unexpectedToken() {
         error("Unexpected token " + currentToken.getType()
                 + " at line " + currentToken.getLine() + " column " + currentToken.getColumn()
                 + " at rule " + derivation.get(derivation.size() - 1));
     }
 
+    /**
+     * Matches the current token with the expected token.
+     *
+     * If the current token is the expected token, the parser moves to the next token.
+     * Otherwise, an error message is printed.
+     *
+     * @param expected the expected token
+     * @throws IOException if an I/O error occurs
+     */
     private void match(LexicalUnit expected) throws IOException {
         if (currentToken.getType() == expected) {
             currentToken = lexer.nextToken(); // Move to the next token
@@ -51,6 +87,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the program, which is the starting symbol of the grammar.
+     *
+     * The program is defined as:
+     * Program :== LET ProgName BE Code END
+     *
+     * @return the parse tree of the program
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree program() throws IOException {
         if (currentToken.getType() == LexicalUnit.LET) {
             derivation.add(1); // Rule number [1]
@@ -79,6 +124,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the code block.
+     *
+     * The code is defined as:
+     * Code :== Instruction ; Code | EPSILON
+     *
+     * @return the parse tree of the code block
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree code() throws IOException {
         if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.IF || currentToken.getType() == LexicalUnit.WHILE || currentToken.getType() == LexicalUnit.OUTPUT || currentToken.getType() == LexicalUnit.INPUT) {
             derivation.add(2); // Rule number [2]
@@ -102,6 +156,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the instruction.
+     *
+     * The instruction is defined as:
+     * Instruction :== Assign | If | While | Output | Input
+     *
+     * @return the parse tree of the instruction
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree instruction() throws IOException {
         if (currentToken.getType() == LexicalUnit.VARNAME) {
             derivation.add(4); // Rule number [4]
@@ -129,6 +192,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the assignment.
+     *
+     * The assignment is defined as:
+     * Assign :== VarName = ExprArith
+     *
+     * @return the parse tree of the assignment
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree assign() throws IOException {
         if (currentToken.getType() == LexicalUnit.VARNAME) {
             derivation.add(9); // Rule number [9]
@@ -152,6 +224,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the if statement.
+     *
+     * The if statement is defined as:
+     * If :== IF { Cond } THEN Code IfTail
+     *
+     * @return the parse tree of the if statement
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree ifStatement() throws IOException {
         if (currentToken.getType() == LexicalUnit.IF) {
             derivation.add(10); // Rule number [10]
@@ -186,6 +267,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the if tail/if prime.
+     *
+     * The if tail is defined as:
+     * IfTail :== END | ELSE Code END
+     *
+     * @return the parse tree of the if tail
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree ifTail() throws IOException {
         if (currentToken.getType() == LexicalUnit.END) {
             derivation.add(11); // Rule number [11]
@@ -215,6 +305,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the while statement.
+     *
+     * The while statement is defined as:
+     * While :== WHILE { Cond } REPEAT Code END
+     *
+     * @return the parse tree of the while statement
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree whileStatement() throws IOException {
         if (currentToken.getType() == LexicalUnit.WHILE) {
             derivation.add(13); // Rule number [13]
@@ -249,6 +348,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the output statement.
+     *
+     * The output statement is defined as:
+     * Output :== OUT ( [VarName] )
+     *
+     * @return the parse tree of the output statement
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree output() throws IOException {
         if (currentToken.getType() == LexicalUnit.OUTPUT) {
             derivation.add(14); // Rule number [14]
@@ -275,6 +383,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the input statement.
+     *
+     * The input statement is defined as:
+     * Input :== IN ( [VarName] )
+     *
+     * @return the parse tree of the input statement
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree input() throws IOException {
         if (currentToken.getType() == LexicalUnit.INPUT) {
             derivation.add(15); // Rule number [15]
@@ -301,6 +418,16 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the arithmetic expression.
+     *
+     * The arithmetic expression is defined as:
+     * ExprArith :== Expr (This rule is redundant and could be removed!)
+     * Expr :== Term Expr'
+     *
+     * @return the parse tree of the arithmetic expression
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree exprArith() throws IOException {
         if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(16); // Rule number [16] - Could remove this rule!
@@ -321,6 +448,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the term.
+     *
+     * The term is defined as:
+     * Term :== Unit Term'
+     *
+     * @return the parse tree of the term
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree term() throws IOException {
         if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(22); // Rule number [22]
@@ -340,6 +476,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the arithmetic expression tail.
+     *
+     * The arithmetic expression tail is defined as:
+     * ExprArith' :== PlusMinus Term ExprArith' | EPSILON
+     *
+     * @return the parse tree of the arithmetic expression tail
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree exprArithTail() throws IOException {
         if (currentToken.getType() == LexicalUnit.PLUS || currentToken.getType() == LexicalUnit.MINUS) {
             derivation.add(18); // Rule number [18]
@@ -363,6 +508,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the plus or minus operator.
+     *
+     * The plus or minus operator is defined as:
+     * PlusMinus :== + | -
+     *
+     * @return the parse tree of the plus or minus operator
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree plusMinus() throws IOException {
         if (currentToken.getType() == LexicalUnit.PLUS) {
             derivation.add(20); // Rule number [20]
@@ -382,6 +536,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the term tail.
+     *
+     * The term tail is defined as:
+     * Term' :== MulDiv Unit Term' | EPSILON
+     *
+     * @return the parse tree of the term tail
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree termTail() throws IOException {
         if (currentToken.getType() == LexicalUnit.TIMES || currentToken.getType() == LexicalUnit.DIVIDE) {
             derivation.add(23); // Rule number [23]
@@ -405,6 +568,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the multiplication or division operator.
+     *
+     * The multiplication or division operator is defined as:
+     * MulDiv :== * | /
+     *
+     * @return the parse tree of the multiplication or division operator
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree mulDiv() throws IOException {
         if (currentToken.getType() == LexicalUnit.TIMES) {
             derivation.add(25); // Rule number [25]
@@ -424,6 +596,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the unit.
+     *
+     * The unit is defined as:
+     * Unit :== - Unit | [VarName] | [Number] | ( ExprArith )
+     *
+     * @return the parse tree of the unit
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree unit() throws IOException {
         if (currentToken.getType() == LexicalUnit.MINUS) {
             derivation.add(27); // Rule number [27]
@@ -471,6 +652,16 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the condition.
+     *
+     * The condition is defined as:
+     * Cond :== ExprArith Comp ExprArith Cond'
+     *      :== | Cond |
+     *
+     * @return the parse tree of the condition
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree cond() throws IOException {
         if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
             derivation.add(31); // Rule number [31]
@@ -508,6 +699,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the condition tail.
+     *
+     * The condition tail is defined as:
+     * Cond' :== -> Cond | EPSILON
+     *
+     * @return the parse tree of the condition tail
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree condTail() throws IOException {
         if (currentToken.getType() == LexicalUnit.IMPLIES) {
             derivation.add(36); // Rule number [33]
@@ -528,6 +728,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses the comparison operator.
+     *
+     * The comparison operator is defined as:
+     * Comp :== == | &lt;= | &lt;
+     *
+     * @return the parse tree of the comparison operator
+     * @throws IOException if an I/O error occurs
+     */
     private ParseTree comp() throws IOException {
         if (currentToken.getType() == LexicalUnit.EQUAL) {
             derivation.add(35); // Rule number [35]

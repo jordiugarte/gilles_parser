@@ -1,0 +1,14 @@
+\documentclass[border=5pt]{standalone}
+
+\usepackage{tikz}
+\usepackage{forest}
+
+\begin{document}
+
+\begin{forest}for tree={rectangle, draw, rounded corners, l sep=20pt}[{Program} [{LET} ][{PROGNAME} ][{BE} ][{CodeBlock} [{InputStatement} [{INPUT} ][{LPAREN} ][{VARNAME: n} ][{RPAREN} ]][{COLON} ][{CodeBlock} [{IfStatement} [{IF} ][{LBRACK} ][{Cond} [{ExprArith} [{Term} [{Unit} [{VARNAME: n} ]][{} ]][{} ]][{Comp} ][{ExprArith} [{Term} [{Unit} [{NUMBER: 0} ]][{} ]][{} ]][{} ]][{RBRACK} ][{THEN} ][{CodeBlock} [{Assign} [{VARNAME: a} ][{ASSIGN} ][{ExprArith} [{Term} [{Unit} [{NUMBER: 0} ]][{} ]][{} ]]][{COLON} ][{CodeBlock} [{OutputStatement} [{OUTPUT} ][{LPAREN} ][{VARNAME: a} ][{RPAREN} ]][{COLON} ][{} ]]][{IfTail} [{ELSE} ][{CodeBlock} [{OutputStatement} [{OUTPUT} ][{LPAREN} ][{VARNAME: n} ][{RPAREN} ]][{COLON} ][{} ]][{END} ]]][{COLON} ][{} ]]][{END} ]];
+\end{forest}
+
+\end{document}
+%% Local Variables:
+%% TeX-engine: pdflatex
+%% End:
