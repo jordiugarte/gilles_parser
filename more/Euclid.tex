@@ -1,0 +1,14 @@
+\documentclass[border=5pt]{standalone}
+
+\usepackage{tikz}
+\usepackage{forest}
+
+\begin{document}
+
+\begin{forest}for tree={rectangle, draw, rounded corners, l sep=20pt}[{Program} [{LET} ][{PROGNAME} ][{BE} ][{CodeBlock} [{InputStatement} [{INPUT} ][{LPAREN} ][{VARNAME: a} ][{RPAREN} ]][{COLON} ][{CodeBlock} [{InputStatement} [{INPUT} ][{LPAREN} ][{VARNAME: b} ][{RPAREN} ]][{COLON} ][{CodeBlock} [{WhileStatement} [{WHILE} ][{LBRACK} ][{Cond} [{ExprArith} [{Term} [{Unit} [{NUMBER: 0} ]][{} ]][{} ]][{Comp} ][{ExprArith} [{Term} [{Unit} [{VARNAME: b} ]][{} ]][{} ]][{} ]][{RBRACK} ][{REPEAT} ][{CodeBlock} [{Assign} [{VARNAME: c} ][{ASSIGN} ][{ExprArith} [{Term} [{Unit} [{VARNAME: b} ]][{} ]][{} ]]][{COLON} ][{CodeBlock} [{WhileStatement} [{WHILE} ][{LBRACK} ][{Cond} [{ExprArith} [{Term} [{Unit} [{VARNAME: b} ]][{} ]][{} ]][{Comp} ][{ExprArith} [{Term} [{Unit} [{VARNAME: a} ]][{} ]][{} ]][{} ]][{RBRACK} ][{REPEAT} ][{CodeBlock} [{Assign} [{VARNAME: a} ][{ASSIGN} ][{ExprArith} [{Term} [{Unit} [{VARNAME: a} ]][{} ]][{Expr'} [{-} ][{Term} [{Unit} [{VARNAME: b} ]][{} ]][{} ]]]][{COLON} ][{} ]][{END} ]][{COLON} ][{CodeBlock} [{Assign} [{VARNAME: b} ][{ASSIGN} ][{ExprArith} [{Term} [{Unit} [{VARNAME: a} ]][{} ]][{} ]]][{COLON} ][{CodeBlock} [{Assign} [{VARNAME: a} ][{ASSIGN} ][{ExprArith} [{Term} [{Unit} [{VARNAME: c} ]][{} ]][{} ]]][{COLON} ][{} ]]]]][{END} ]][{COLON} ][{CodeBlock} [{OutputStatement} [{OUTPUT} ][{LPAREN} ][{VARNAME: a} ][{RPAREN} ]][{COLON} ][{} ]]]]][{END} ]];
+\end{forest}
+
+\end{document}
+%% Local Variables:
+%% TeX-engine: pdflatex
+%% End:
