@@ -1,81 +1,69 @@
 /**
- * Enum for Non-Terminals in the grammar
+ * A non-terminal symbol, a.k.a. a variable in the grammar.
  */
 public enum NonTerminal {
-    /** Program */
-    PROGRAM("Program"),
-    /** Code */
-    CODE("CodeBlock"),
-    /** Instruction */
-    INSTRUCTION("Instruction"),
-    /** Assignment */
-    ASSIGNMENT("Assign"),
-    /** If */
-    IFSTATEMENT("IfStatement"),
-    /** IfTail */
-    IFTAIL("IfTail"),
-    /** While */
-    WHILESTATEMENT("WhileStatement"),
-    /** Output */
-    OUTPUTSTATEMENT("OutputStatement"),
-    /** Input */
-    INPUTSTATEMENT("InputStatement"),
-    /** Arithmetic Expression */
-    ARITHMETICEXPRESSION("ExprArith"),
-    /** Expression */
-    EXPRESSION("Expr"),
-    /** Expression' */
-    EXPRESSIONPRIME("Expr'"),
-    /** Term */
-    TERM("Term"),
-    /** Term' */
-    TERMPRIME("Term'"),
-    /** Factor */
-    UNIT("Unit"),
-    /** Condition */
-    CONDITION("Cond"),
-    /** Condition' */
-    CONDITIONPRIME("Cond'"),
-    /** Comparison */
-    COMPARISON("Comp"),
-
-    /* The following are technically not non-terminals, though we are just using this enum
-       for the sake of pretty printing; could move to its own enum named better */
-    /** Plus */
-    PLUS("+"),
-    /** Minus */
-    MINUS("-"),
-    /** Mul */
-    MUL("*"),
-    /** Div */
-    DIV("/"),
-    /** Epsilon */
-    EPSILON("");
-
-    private final String value;
-
+    /** &lt;Program&gt; */
+    Program,
+    /** &lt;Code&gt; */
+    Code,
+    /** &lt;Instruction&gt; */
+    Instruction,
+    /** &lt;Assign&gt; */
+    Assign,
+    /** &lt;If&gt; */
+    While,
+    /** &lt;Call&gt; */
+    Call,
+    /** &lt;Output&gt; */
+    Output,
+    /** &lt;Input&gt; */
+    Input,
+    /** &lt;ExprArith&gt; */
+    ExprArith,
+    /** &lt;ExprArith'&gt; */
+    ExprArithPrime,
+    /** &lt;Prod&gt; */
+    Prod,
+    /** &lt;Prod'&gt; */
+    ProdPrime,
+    /** &lt;Atom&gt; */
+    Atom,
+    /** &lt;If&gt; */
+    If,
+    /** &lt;IfTail&gt; */
+    IfTail,
+    /** &lt;Cond&gt; */
+    Cond,
+    /** &lt;Cond'&gt; */
+    CondPrime,
+    /** &lt;SimpleCond&gt; */
+    SimpleCond,
+    /** &lt;Comp&gt; */
+    Comp;
+    
     /**
-     * Constructor for the NonTerminal enum
-     * @param value the value of the non-terminal
-     */
-    NonTerminal(String value) {
-        this.value = value;
-    }
-
-    /**
-     * Getter for the value of the non-terminal
-     * @return the value of the non-terminal
-     */
-    public String getValue() {
-        return value;
-    }
-
-    /**
-     * Overriding toString() to return the value of the non-terminal
-     * @return the value of the non-terminal
+     * Returns a string representation of the non-terminal (without the surrounding &lt;&nbsp;&gt;).
+     * 
+     * @return a String representing the non-terminal.
      */
     @Override
     public String toString() {
-        return getValue();
+        String n=this.name();
+        String realName=n;
+        if (n.endsWith("Prime")) {
+            realName=n.substring(0,n.length()-5)+"'";
+        }
+        return realName;
+    }
+    
+    /**
+     * Returns th LaTeX code to represent the non-terminal.
+     * 
+     * The non-terminal is in sans-serif font and surrounded by angle brackets.
+     * 
+     * @return a String representing LaTeX code for the non-terminal.
+     */
+    public String toTexString() {
+        return "\\textsf{$\\langle$"+this.toString()+"$\\rangle$}";
     }
 }

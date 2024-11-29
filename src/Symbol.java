@@ -168,7 +168,7 @@
 	@Override
 	public String toString(){
         final String value	= this.value != null? this.value.toString() : "null";
-		if (this.isTerminal()) {
+		if(this.isTerminal()){
 			final String type		= this.type  != null? this.type.toString()  : "null";
 			return "token: "+padTo(value,12)+"\tlexical unit: "+type; // The longest keyword has length 7
 		}
@@ -190,18 +190,28 @@
         return res;
     }
 
-	/**
-	 * Returns a string representation of the symbol in LaTeX format.
-	 *
-	 * @return a string representation of the token's value and type in LaTeX format.
-	 */
-	public String toTexString() {
-		if (this.isTerminal()){
-			if (this.value == null){
-				return this.type.toString();
-			}
-			return this.type.toString() + ": " + this.value;
-		}
-		return this.value.toString();
-	}
-}
+    
+
+    /**
+     * Returns a LaTeX representation of the symbol.
+     * 
+     * @return a string containing LaTeX code of a representation of the token's value and type.
+     */
+    public String toTexString(){
+        String value = "";
+        if(this.isTerminal()){
+            if (this.type == LexicalUnit.VARNAME || this.type == LexicalUnit.NUMBER) {
+                value = this.value != null? ": "+this.value.toString() : "";
+            }
+            final String type = this.type  != null? this.type.toTexString()  : "null";
+            return type+value;
+        } else {
+            if (this.value != null && this.value instanceof NonTerminal) {
+                value   = ((NonTerminal) this.value).toTexString();
+            } else {
+                value="null";
+            }
+            return value;
+        }
+    }
+ }

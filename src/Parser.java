@@ -1,764 +1,818 @@
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
- * Parser class for the grammar.
+ * Parser for GILLES.
+ * 
+ * The parser implements a recursive descent mimicking the run of the pushdown automaton: the call stack replacing the automaton stack.
+ * 
+ * @author Mrudula Balachander, inspired from earlier versions of the project (exact authors not determined).
+ *
  */
-public class Parser {
-    private final LexicalAnalyzer lexer;
-    private final List<Integer> derivation;
-    private Symbol currentToken;
-    private String currentTokenValue;
+public class Parser{
+    /**
+     * Lexer object for the parsed file.
+     */
+    private LexicalAnalyzer scanner;
+    /**
+     * Current symbol at the head of the word to be read. This corresponds to the look-ahead (of length 1).
+     */
+    private Symbol current;
+    /**
+     * Option to print only the rule number (false) or the full rule (true).
+     */
+    private boolean fullRuleDisplay=false;
+    /**
+     * Width (in characters) of the widest left handside in a production rule.
+     */
+    private static final int widestNonTerm=13; // <Instruction>
+    /**
+     * Width (in characters) of the highest rule number.
+     */
+    private static final int log10ruleCard=2; // 35 rules
 
     /**
-     * Creates a parser using the provided lexer.
-     *
-     * @param lexer the lexer to use for parsing
-     * @throws IOException if an I/O error occurs
+     * Creates a Parser object for the provided file and initialized the look-ahead.
+     * 
+     * @param source a FileReader object for the parsed file.
+     * @throws IOException in case the lexing fails (syntax error).
      */
-    public Parser(LexicalAnalyzer lexer) throws IOException {
-        this.lexer = lexer;
-        this.currentToken = lexer.nextToken();
-        this.derivation = new ArrayList<>();
+    public Parser(FileReader source) throws IOException{
+        this.scanner = new LexicalAnalyzer(source);
+        this.current = scanner.nextToken();
     }
-
+    
+    /* Display of the rules */
     /**
-     * Getter for the derivation list.
-     *
-     * @return the derivation list
+     * Returns a string of several spaces.
+     * 
+     * @param n the number of spaces.
+     * @return a String containing n spaces.
      */
-    public List<Integer> getDerivation() {
-        return derivation;
+    private static String multispace(int n) {
+        String res="";
+        for (int i=0;i<n;i++) {
+            res+=" ";
+        };
+        return res;
     }
-
+    
     /**
-     * Parses the program.
-     *
-     * @return the parse tree of the program
-     * @throws IOException if an I/O error occurs
+     * Outputs the rule used in the LL descent.
+     * 
+     * @param rNum the rule number.
+     * @param ruleLhs the left hand-side of the rule as a String.
+     * @param ruleRhs the right hand-side of the rule as a String.
+     * @param full a boolean specifying whether to write only the rule number (false) or the full rule (true).
      */
-    public ParseTree parse() throws IOException {
-        ParseTree tree = program();
-        if (currentToken.getType() == LexicalUnit.EOS) {
-            assert tree != null;
-            return tree;
-        }
-        error("Unexpected token after end of valid program: " + currentToken.getType() + " at line " + currentToken.getLine() + " column " + currentToken.getColumn());
-        return null;
-    }
-
-    /**
-     * Prints an error message and throws a RuntimeException.
-     * @param message
-     */
-    private void error(String message) {
-        throw new RuntimeException("Error: " + message);
-    }
-
-    /**
-     * Prints an error message for an unexpected token.
-     *
-     * This method is called when the parser encounters a token that is not expected.
-     */
-    private void unexpectedToken() {
-        error("Unexpected token " + currentToken.getType()
-                + " at line " + currentToken.getLine() + " column " + currentToken.getColumn()
-                + " at rule " + derivation.get(derivation.size() - 1));
-    }
-
-    /**
-     * Matches the current token with the expected token.
-     *
-     * If the current token is the expected token, the parser moves to the next token.
-     * Otherwise, an error message is printed.
-     *
-     * @param expected the expected token
-     * @throws IOException if an I/O error occurs
-     */
-    private void match(LexicalUnit expected) throws IOException {
-        if (currentToken.getType() == expected) {
-            currentToken = lexer.nextToken(); // Move to the next token
+    private static void ruleOutput(int rNum, String ruleLhs,String ruleRhs, boolean full) {
+        if (full) {
+            System.out.println("   ["+rNum+"]"+
+                multispace(1+log10ruleCard-String.valueOf(rNum).length())+ // Align left hand-sides regardless of number of digits in rule number
+                ruleLhs+multispace(2+widestNonTerm-ruleLhs.length())+ // Align right hand-sides regardless of length of the left hand-side
+                "→  "+ruleRhs);
         } else {
-            error("Expected " + expected + " but found " + currentToken.getType()
-                    + " at line " + currentToken.getLine() + " column " + currentToken.getColumn()
-                    + " at rule " + derivation.get(derivation.size() - 1));
+            System.out.print(rNum+" ");
+        }
+    }
+    
+    /**
+     * Outputs the rule used in the LL descent, using the fullRuleDisplay value to set the option of full display or not.
+     * 
+     * @param rNum the rule number.
+     * @param ruleLhs the left hand-side of the rule as a String.
+     * @param ruleRhs the right hand-side of the rule as a String.
+     */
+    private void ruleOutput(int rNum, String ruleLhs,String ruleRhs) {
+        ruleOutput(rNum,ruleLhs,ruleRhs,this.fullRuleDisplay);
+    }
+    
+    /**
+     * Sets the display option to "Full rules".
+     */
+    public void displayFullRules() {
+        this.fullRuleDisplay=true;
+    }
+    
+    /**
+     * Sets the display option to "Rule numbers only".
+     */
+    public void displayRuleNumbers() {
+        this.fullRuleDisplay=false;
+    }
+
+    /* Matching of terminals */
+    /**
+     * Advances in the input stream, consuming one token.
+     * 
+     * @throws IOException in case the lexing fails (syntax error).
+     */
+    private void consume() throws IOException{
+        current = scanner.nextToken();
+    }
+
+    /**
+     * Matches a (terminal) token from the head of the word.
+     * 
+     * @param token then LexicalUnit (terminal) to be matched.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the matching fails (syntax error): the next tolen is not the one to be matched.
+     * @return a ParseTree made of a single leaf (the matched terminal).
+     */
+    private ParseTree match(LexicalUnit token) throws IOException, ParseException{
+        if(!current.getType().equals(token)){
+            // There is a parsing error
+            throw new ParseException(current, Arrays.asList(token));
+        }
+        else {
+            Symbol cur = current;
+            consume();
+            return new ParseTree(cur);
+        }
+    }
+    
+    /* Applying grammar rules */
+    /**
+     * Parses the file.
+     * 
+     * @return a ParseTree containing the parsed file structured by the grammar rules.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    public ParseTree parse() throws IOException, ParseException{
+        // Program is the initial symbol of the grammar
+        ParseTree pt = program();
+        if (!this.fullRuleDisplay) {System.out.println();} // New line at the end of list of rules
+        return pt;
+    }
+    
+    /**
+     * Treats a &lt;Program&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [1]&nbsp;&lt;Program&gt;&nbsp;&rarr;&nbsp;<code>begin</code> &lt;Code&gt; <code>end</code>
+     * 
+     * @return a ParseTree with a &lt;Program&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree program() throws IOException, ParseException{
+        // [1] <Program>  ->  begin <Code> end
+        ruleOutput(1,"<Program>","LET [ProgName] BE <Code> END");
+        return new ParseTree(NonTerminal.Program, Arrays.asList(
+            match(LexicalUnit.LET),
+            match(LexicalUnit.PROGNAME),
+            match(LexicalUnit.BE),
+            code(),
+            match(LexicalUnit.END)
+        ));
+    }
+    
+    /**
+     * Treats a &lt;Code&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[2]&nbsp;&lt;Code&gt;&nbsp;&rarr;&nbsp;&lt;Instruction&gt;&nbsp;<code>:</code>&nbsp;&lt;Code&gt;</li>
+     *   <li>[3]&nbsp;&lt;Code&gt;&nbsp;&rarr;&nbsp;&epsilon;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Code&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree code() throws IOException, ParseException{
+        switch(current.getType()) {
+            // [2] <Code>  ->  <Instruction>:<Code>
+            case IF:
+            case WHILE:
+            case OUTPUT:
+            case INPUT:
+            case VARNAME:
+                ruleOutput(2,"<Code>","<Instruction>:<Code>");
+                return new ParseTree(NonTerminal.Code, Arrays.asList(
+                    instruction(),
+                    match(LexicalUnit.COLUMN),
+                    code()
+                ));
+            // [3] <Code>  ->  EPSILON 
+            case END:
+            case ELSE:
+                ruleOutput(3,"<Code>","ɛ");
+                return new ParseTree(NonTerminal.Code, Arrays.asList(
+                    new ParseTree(LexicalUnit.EPSILON)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.Code,Arrays.asList(
+                    LexicalUnit.IF,
+                    LexicalUnit.ELSE,
+                    LexicalUnit.WHILE,
+                    LexicalUnit.OUTPUT,
+                    LexicalUnit.INPUT,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.END
+                ));
         }
     }
 
     /**
-     * Parses the program, which is the starting symbol of the grammar.
-     *
-     * The program is defined as:
-     * Program :== LET ProgName BE Code END
-     *
-     * @return the parse tree of the program
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;Instruction&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[7]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;&lt;Assign&gt;</li>
+     *   <li>[8]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;&lt;If&gt;</li>
+     *   <li>[9]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;&lt;While&gt;</li>
+     *   <li>[10]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;&lt;Print&gt;</li>
+     *   <li>[11]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;&lt;Read&gt;</li>
+     *   <li>[12]&nbsp;&lt;Instruction&gt;&nbsp;&rarr;&nbsp;<code>begin</code> &lt;InstList&gt; <code>end</code></li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Instruction&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree program() throws IOException {
-        if (currentToken.getType() == LexicalUnit.LET) {
-            derivation.add(1); // Rule number [1]
-            // Match LET
-            match(LexicalUnit.LET);
-            // Match [ProgName]
-            match(LexicalUnit.PROGNAME);
-            // Match BE
-            match(LexicalUnit.BE);
-            // Parse <Code>
-            ParseTree codeTree = code();
-            // Match END
-            match(LexicalUnit.END);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.LET)),
-                    new ParseTree(new Symbol(LexicalUnit.PROGNAME)),
-                    new ParseTree(new Symbol(LexicalUnit.BE)),
-                    codeTree,
-                    new ParseTree(new Symbol(LexicalUnit.END))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.PROGRAM), children);
-        } else {
-            unexpectedToken();
-            return null;
+    private ParseTree instruction() throws IOException, ParseException{
+        switch(current.getType()) {
+            // [4] <Instruction>  ->  <Assign>
+            case VARNAME:
+                ruleOutput(4,"<Instruction>","<Assign>");
+                return new ParseTree(NonTerminal.Instruction, Arrays.asList(
+                    assignExpr()
+                ));
+            // [5] <Instruction>  ->  <If>
+            case IF:
+                ruleOutput(5,"<Instruction>","<If>");
+                return new ParseTree(NonTerminal.Instruction, Arrays.asList(
+                    ifExpr()
+                ));
+            // [6] <Instruction>  ->  <While>
+            case WHILE:
+                ruleOutput(6,"<Instruction>","<While>");
+                return new ParseTree(NonTerminal.Instruction, Arrays.asList(
+                    whileExpr()
+                ));
+            // [7] <Instruction>  ->  <Output>
+            case OUTPUT:
+                ruleOutput(7,"<Instruction>","<Output>");
+                return new ParseTree(NonTerminal.Instruction, Arrays.asList(
+                    outputExpr()
+                ));
+            // [8] <Instruction>  ->  <Input>
+            case INPUT:
+                ruleOutput(8,"<Instruction>","<Input>");
+                return new ParseTree(NonTerminal.Instruction, Arrays.asList(
+                    inputExpr()
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.Instruction,Arrays.asList(
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.IF,
+                    LexicalUnit.WHILE,
+                    LexicalUnit.OUTPUT,
+                    LexicalUnit.INPUT
+                ));
+        }
+    }
+    
+    /**
+     * Treats a &lt;Assign&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [13]&nbsp;&lt;Assign&gt;&nbsp;&rarr;&nbsp;[Varname]<code>:=</code>&lt;ExprArith&gt;
+     * 
+     * @return a ParseTree with a &lt;Assign&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree assignExpr() throws IOException, ParseException{
+        // [9] <Assign>  ->  [Varname] = <ExprArith>
+        ruleOutput(9,"<Assign>","[Varname] = <ExprArith>");
+        return new ParseTree(NonTerminal.Assign, Arrays.asList(
+            match(LexicalUnit.VARNAME),
+            match(LexicalUnit.ASSIGN),
+            exprArith()
+        ));
+    }
+    
+    /**
+     * Treats a &lt;ExprArith&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [10]&nbsp;&lt;ExprArith&gt;&nbsp;&rarr;&nbsp;&lt;Prod&gt;&lt;ExprArith'&gt;
+     * 
+     * @return a ParseTree with a &lt;ExprArith&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree exprArith() throws IOException, ParseException{
+        switch (current.getType()) {
+            case MINUS:
+            case LPAREN:
+            case VARNAME:
+            case NUMBER:
+                // [10] <ExprArith>  ->  <Prod> <ExprArith'>
+                ruleOutput(10,"<ExprArith>","<Prod> <ExprArith'>");
+                return new ParseTree(NonTerminal.ExprArith, Arrays.asList(
+                    prod(),
+                    exprArithPrime()
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.ExprArith,Arrays.asList(
+                    LexicalUnit.MINUS,
+                    LexicalUnit.LPAREN,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.NUMBER
+                ));
         }
     }
 
     /**
-     * Parses the code block.
-     *
-     * The code is defined as:
-     * Code :== Instruction ; Code | EPSILON
-     *
-     * @return the parse tree of the code block
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;ExprArith'&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[11]&nbsp;&lt;ExprArith'&gt;&nbsp;&rarr;&nbsp;<code>+</code>&lt;Prod&gt;&lt;ExprArith'&gt;</li>
+     *   <li>[12]&nbsp;&lt;ExprArith'&gt;&nbsp;&rarr;&nbsp;<code>-</code>&lt;Prod&gt;&lt;ExprArith'&gt;</li>
+     *   <li>[13]&nbsp;&lt;ExprArith'&gt;&nbsp;&rarr;&nbsp;&epsilon;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;ExprArith'&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree code() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.IF || currentToken.getType() == LexicalUnit.WHILE || currentToken.getType() == LexicalUnit.OUTPUT || currentToken.getType() == LexicalUnit.INPUT) {
-            derivation.add(2); // Rule number [2]
-            // Parse <Instruction>
-            ParseTree instructionTree = instruction();
-            // Match ;
-            match(LexicalUnit.COLON);
-            // Parse <Code>
-            ParseTree codeTree = code();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    instructionTree,
-                    new ParseTree(new Symbol(LexicalUnit.COLON)),
-                    codeTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.CODE), children);
-        } else {
-            derivation.add(3); // Rule number [3]
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.EPSILON));
+    private ParseTree exprArithPrime() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [11] <ExprArith'>  ->  + <Prod> <ExprArith'>
+            case PLUS:
+                ruleOutput(11,"<ExprArith'>","+ <Prod> <ExprArith'>");
+                return new ParseTree(NonTerminal.ExprArithPrime, Arrays.asList(
+                    match(LexicalUnit.PLUS),
+                    prod(),
+                    exprArithPrime()
+                ));
+            // [12] <ExprArith'>  ->  - <Prod> <ExprArith'>
+            case MINUS:
+                ruleOutput(12,"<ExprArith'>","- <Prod> <ExprArith'>");
+                return new ParseTree(NonTerminal.ExprArithPrime, Arrays.asList(
+                    match(LexicalUnit.MINUS),
+                    prod(),
+                    exprArithPrime()
+                ));
+            // [13] <ExprArith'>  ->  EPSILON
+            case COLUMN:
+            case RPAREN:
+            case RBRACK:
+            case EQUAL:
+            case SMALEQ:
+            case SMALLER:
+            case IMPLIES:
+            case PIPE:
+                ruleOutput(13,"<ExprArith'>","ɛ");
+                return new ParseTree(NonTerminal.ExprArithPrime, Arrays.asList(
+                    new ParseTree(LexicalUnit.EPSILON)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.ExprArithPrime,Arrays.asList(
+                    LexicalUnit.PLUS,
+                    LexicalUnit.MINUS,
+                    LexicalUnit.COLUMN,
+                    LexicalUnit.RPAREN,
+                    LexicalUnit.RBRACK,
+                    LexicalUnit.EQUAL,
+                    LexicalUnit.SMALEQ,
+                    LexicalUnit.SMALLER,
+                    LexicalUnit.IMPLIES,
+                    LexicalUnit.PIPE
+                ));
+        }
+    }
+    
+    /**
+     * Treats a &lt;Prod&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [14]&nbsp;&lt;Prod&gt;&nbsp;&rarr;&nbsp;&lt;Atom&gt;&lt;Prod'&gt;
+     * 
+     * @return a ParseTree with a &lt;Prod&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree prod() throws IOException, ParseException{
+        switch (current.getType()) {
+            case MINUS:
+            case LPAREN:
+            case VARNAME:
+            case NUMBER:
+                // [14] <Prod>  ->  <Atom> <Prod'>
+                ruleOutput(18,"<Prod'>","<Atom> <Prod'>");
+                return new ParseTree(NonTerminal.Prod, Arrays.asList(
+                    atom(),
+                    prodPrime()
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.ExprArith,Arrays.asList(
+                    LexicalUnit.MINUS,
+                    LexicalUnit.LPAREN,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.NUMBER
+                ));
         }
     }
 
     /**
-     * Parses the instruction.
-     *
-     * The instruction is defined as:
-     * Instruction :== Assign | If | While | Output | Input
-     *
-     * @return the parse tree of the instruction
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;Prod'&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[19]&nbsp;&lt;Prod'&gt;&nbsp;&rarr;&nbsp;<code>*</code>&lt;Atom&gt;&lt;Prod'&gt;</li>
+     *   <li>[20]&nbsp;&lt;Prod'&gt;&nbsp;&rarr;&nbsp;<code>/</code>&lt;Atom&gt;&lt;Prod'&gt;</li>
+     *   <li>[21]&nbsp;&lt;Prod'&gt;&nbsp;&rarr;&nbsp;&epsilon;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Prod'&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree instruction() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME) {
-            derivation.add(4); // Rule number [4]
-            // Parse <Assign>
-            return assign();
-        } else if (currentToken.getType() == LexicalUnit.IF) {
-            derivation.add(5); // Rule number [5]
-            // Parse <If>
-            return ifStatement();
-        } else if (currentToken.getType() == LexicalUnit.WHILE) {
-            derivation.add(6); // Rule number [6]
-            // Parse <While>
-            return whileStatement();
-        } else if (currentToken.getType() == LexicalUnit.OUTPUT) {
-            derivation.add(7); // Rule number [7]
-            // Parse <Output>
-            return output();
-        } else if (currentToken.getType() == LexicalUnit.INPUT) {
-            derivation.add(8); // Rule number [8]
-            // Parse <Input>
-            return input();
-        } else {
-            unexpectedToken();
-            return null;
+    private ParseTree prodPrime() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [15] <Prod'>  ->  * <Atom> <Prod'>
+            case TIMES:
+                ruleOutput(15,"<Prod'>","* <Atom> <Prod'>");
+                return new ParseTree(NonTerminal.ProdPrime, Arrays.asList(
+                    match(LexicalUnit.TIMES),
+                    atom(),
+                    prodPrime()
+                ));
+            // [16] <Prod'>  ->  / <Atom> <Prod'>
+            case DIVIDE:
+                ruleOutput(16,"<Prod'>","/ <Atom> <Prod'>");
+                return new ParseTree(NonTerminal.ProdPrime, Arrays.asList(
+                    match(LexicalUnit.DIVIDE),
+                    atom(),
+                    prodPrime()
+                ));
+            // [17] <Prod'>  ->  EPSILON
+            case COLUMN:
+            case PLUS:
+            case MINUS:
+            case RPAREN:
+            case RBRACK:
+            case EQUAL:
+            case SMALLER:
+            case SMALEQ:
+            case IMPLIES:
+            case PIPE:
+                ruleOutput(17,"<Prod'>","ɛ");
+                return new ParseTree(NonTerminal.ProdPrime, Arrays.asList(
+                    new ParseTree(LexicalUnit.EPSILON)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.ProdPrime,Arrays.asList(
+                    LexicalUnit.PLUS,
+                    LexicalUnit.MINUS,
+                    LexicalUnit.TIMES,
+                    LexicalUnit.DIVIDE,
+                    LexicalUnit.COLUMN,
+                    LexicalUnit.RPAREN,
+                    LexicalUnit.RBRACK,
+                    LexicalUnit.SMALEQ,
+                    LexicalUnit.IMPLIES,
+                    LexicalUnit.PIPE,
+                    LexicalUnit.EQUAL,
+                    LexicalUnit.SMALLER
+                ));
         }
     }
 
     /**
-     * Parses the assignment.
-     *
-     * The assignment is defined as:
-     * Assign :== VarName = ExprArith
-     *
-     * @return the parse tree of the assignment
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;Atom&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[18]&nbsp;&lt;Atom&gt;&nbsp;&rarr;&nbsp;[VarName]</li>
+     *   <li>[19]&nbsp;&lt;Atom&gt;&nbsp;&rarr;&nbsp;[Number]</li>
+     *   <li>[20]&nbsp;&lt;Atom&gt;&nbsp;&rarr;&nbsp;<code>(</code>&lt;ExprArith&gt;<code>)</code></li>
+     *   <li>[21]&nbsp;&lt;Atom&gt;&nbsp;&rarr;&nbsp;<code>-</code>&lt;Atom&gt;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Atom&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree assign() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME) {
-            derivation.add(9); // Rule number [9]
-            // Match [VarName]
-            Object assignmentVar = currentToken.getValue().toString();
-            match(LexicalUnit.VARNAME);
-            // Match =
-            match(LexicalUnit.ASSIGN);
-            // Parse ExprArith
-            ParseTree exprArithTree = exprArith();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME, assignmentVar)),
-                    new ParseTree(new Symbol(LexicalUnit.ASSIGN)),
-                    exprArithTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.ASSIGNMENT), children);
-        } else {
-            unexpectedToken();
-            return null;
+    private ParseTree atom() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [21] <Atom>  ->  - <Atom>
+            case MINUS:
+                ruleOutput(21,"<Atom>","- <Atom>");
+                return new ParseTree(NonTerminal.Atom, Arrays.asList(
+                    match(LexicalUnit.MINUS),
+                    atom()
+                ));
+            // [20] <Atom>  ->  (<ExprArith>)
+            case LPAREN:
+                ruleOutput(20,"<Atom>","(<ExprArith>)");
+                return new ParseTree(NonTerminal.Atom, Arrays.asList(
+                    match(LexicalUnit.LPAREN),
+                    exprArith(),
+                    match(LexicalUnit.RPAREN)
+                ));
+            // [18] <Atom>  ->  [VarName]
+            case VARNAME:
+                ruleOutput(18,"<Atom>","[VarName]");
+                return new ParseTree(NonTerminal.Atom, Arrays.asList(
+                    match(LexicalUnit.VARNAME)
+                ));
+            // [19] <Atom>  ->  [Number]
+            case NUMBER:
+                ruleOutput(19,"<Atom>","[Number]");
+                return new ParseTree(NonTerminal.Atom, Arrays.asList(
+                    match(LexicalUnit.NUMBER)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.Atom,Arrays.asList(
+                    LexicalUnit.MINUS,
+                    LexicalUnit.LPAREN,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.NUMBER
+                ));
         }
+    }
+    
+    /**
+     * Treats a &lt;If&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [22]&nbsp;&lt;If&gt;&nbsp;&rarr;&nbsp;<code>IF</code>&nbsp;<code>{</code>&lt;Cond&gt;<code>}</code>&nbsp;<code>THEN</code>&nbsp;&lt;Code&gt;&nbsp;<code>ELSE</code>&nbsp;&lt;IfTail&gt;
+     * 
+     * @return a ParseTree with a &lt;If&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree ifExpr() throws IOException, ParseException{
+        // [22] <If>  -> if {<Cond>} then <Code><IfTail>
+        ruleOutput(22,"<If>","IF {<Cond>} THEN <Code><IfTail>");
+        return new ParseTree(NonTerminal.If, Arrays.asList(
+            match(LexicalUnit.IF),
+            match(LexicalUnit.LBRACK),
+            cond(),
+            match(LexicalUnit.RBRACK),
+            match(LexicalUnit.THEN),
+            code(),
+            ifTail()
+        ));
     }
 
     /**
-     * Parses the if statement.
-     *
-     * The if statement is defined as:
-     * If :== IF { Cond } THEN Code IfTail
-     *
-     * @return the parse tree of the if statement
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;IfTail&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[23]&nbsp;&lt;IfTail&gt;&nbsp;&rarr;&nbsp;<code>END</code></li>
+     *   <li>[24]&nbsp;&lt;IfTail&gt;&nbsp;&rarr;&nbsp;<code>ELSE</code>&nbsp;&lt;Instruction&gt;&nbsp;<code>END</code></li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;IfTail&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree ifStatement() throws IOException {
-        if (currentToken.getType() == LexicalUnit.IF) {
-            derivation.add(10); // Rule number [10]
-            // Match IF
-            match(LexicalUnit.IF);
-            // Match {
-            match(LexicalUnit.LBRACK);
-            // Parse <Cond>
-            ParseTree condTree = cond();
-            // Match }
-            match(LexicalUnit.RBRACK);
-            // Match THEN
-            match(LexicalUnit.THEN);
-            // Parse <Code>
-            ParseTree codeTree = code();
-            // Parse <IfTail>
-            ParseTree ifTailTree = ifTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.IF)),
-                    new ParseTree(new Symbol(LexicalUnit.LBRACK)),
-                    condTree,
-                    new ParseTree(new Symbol(LexicalUnit.RBRACK)),
-                    new ParseTree(new Symbol(LexicalUnit.THEN)),
-                    codeTree,
-                    ifTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.IFSTATEMENT), children);
-        } else {
-            unexpectedToken();
-            return null;
+    private ParseTree ifTail() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [24] <IfTail>  ->  ELSE <Code> END
+            case ELSE:
+                ruleOutput(24,"<IfTail>","ELSE <Code> END");
+                return new ParseTree(NonTerminal.IfTail, Arrays.asList(
+                    match(LexicalUnit.ELSE),
+                    code(),
+                    match(LexicalUnit.END)
+                ));
+            // [23] <IfTail>  ->  END
+            case END:
+                ruleOutput(23,"<IfTail>","END");
+                return new ParseTree(NonTerminal.IfTail, Arrays.asList(
+                    match(LexicalUnit.END)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.IfTail,Arrays.asList(
+                    LexicalUnit.END,
+                    LexicalUnit.ELSE
+                ));
         }
+    }
+    
+    /**
+     * Treats a &lt;Cond&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [25]&nbsp;&lt;Cond&gt;&nbsp;&rarr;&nbsp;&lt;SimpleCond&gt;&lt;Cond'&gt;
+     * 
+     * @return a ParseTree with a &lt;Cond&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree cond() throws IOException, ParseException{
+        switch (current.getType()) {
+            case MINUS:
+            case LPAREN:
+            case PIPE:
+            case VARNAME:
+            case NUMBER:
+                // [25] <Cond>  -> <SimpleCond> <Cond'>
+                ruleOutput(25,"<Cond>","<SimpleCond> <Cond'>");
+                return new ParseTree(NonTerminal.Cond, Arrays.asList(
+                    simpleCond(),
+                    condPrime()
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.ExprArith,Arrays.asList(
+                    LexicalUnit.MINUS,
+                    LexicalUnit.LPAREN,
+                    LexicalUnit.PIPE,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.NUMBER
+                ));
+        }
+    }
+    
+    /**
+     * Treats a &lt;Cond'&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[26]&nbsp;&lt;Cond'&gt;&nbsp;&rarr;&nbsp;<code>-></code> &lt;Cond'&gt;</li>
+     *   <li>[27]&nbsp;&lt;Cond'&gt;&nbsp;&rarr;&nbsp;&epsilon;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Cond'&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree condPrime() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [26] <Cond'>  ->  -> <Cond'>
+            case IMPLIES:
+                ruleOutput(26,"<Cond'>","-> <Cond>");
+                return new ParseTree(NonTerminal.CondPrime, Arrays.asList(
+                    match(LexicalUnit.IMPLIES),
+                    cond()
+                ));
+            // [27] <Cond'>  ->  EPSILON
+            case PIPE:
+            case RBRACK:
+                ruleOutput(27,"<Cond'>","ɛ");
+                return new ParseTree(NonTerminal.CondPrime, Arrays.asList(
+                    new ParseTree(LexicalUnit.EPSILON)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.CondPrime,Arrays.asList(
+                    LexicalUnit.IMPLIES,
+                    LexicalUnit.PIPE,
+                    LexicalUnit.RBRACK
+                ));
+        }
+    }
+    
+    /**
+     * Treats a &lt;SimpleCond&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[28]&nbsp;&lt;SimpleCond&gt;&nbsp;&rarr;&nbsp;<code>|</code>&lt;Cond&gt;<code>|</code></li>
+     *   <li>[29]&nbsp;&lt;SimpleCond&gt;&nbsp;&rarr;&nbsp;&lt;ExprArith&gt;&lt;Comp&gt;&lt;ExprArith&gt;</li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;SimpleCond&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree simpleCond() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [28] <SimpleCond>  ->  |<Cond>|
+            case PIPE:
+                ruleOutput(35,"<SimpleCond>","|<Cond>|");
+                return new ParseTree(NonTerminal.SimpleCond, Arrays.asList(
+                    match(LexicalUnit.PIPE),
+                    cond(),
+                    match(LexicalUnit.PIPE)
+                ));
+            // [29] <SimpleCond>  ->  <ExprArith> <Comp> <ExprArith>
+            case MINUS:
+            case LPAREN:
+            case VARNAME:
+            case NUMBER:
+                ruleOutput(36,"<SimpleCond>","<ExprArith> <Comp> <ExprArith>");
+                return new ParseTree(NonTerminal.SimpleCond, Arrays.asList(
+                    exprArith(),
+                    compOp(),
+                    exprArith()
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.SimpleCond,Arrays.asList(
+                    LexicalUnit.PIPE,
+                    LexicalUnit.MINUS,
+                    LexicalUnit.LPAREN,
+                    LexicalUnit.VARNAME,
+                    LexicalUnit.NUMBER
+                ));
+        }
+    }
+                
+    /**
+     * Treats a &lt;Comp&gt; at the top of the stack.
+     * 
+     * Tries to apply one of the rules <ul>
+     *   <li>[30]&nbsp;&lt;Comp&gt;&nbsp;&rarr;&nbsp;<code>=</code></li>
+     *   <li>[31]&nbsp;&lt;Comp&gt;&nbsp;&rarr;&nbsp;<code>&lt;=</code></li>
+     *   <li>[32]&nbsp;&lt;Comp&gt;&nbsp;&rarr;&nbsp;<code>&lt;</code></li>
+     * </ul>
+     * 
+     * @return a ParseTree with a &lt;Comp&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree compOp() throws IOException, ParseException{
+        switch (current.getType()) {
+            // [30] <Comp>  ->  ==
+            case EQUAL:
+                ruleOutput(30,"<Comp>","==");
+                return new ParseTree(NonTerminal.Comp, Arrays.asList(
+                    match(LexicalUnit.EQUAL)
+                ));
+            // [31] <Comp>  ->  <=
+            case SMALEQ:
+                ruleOutput(31,"<Comp>","<=");
+                return new ParseTree(NonTerminal.Comp, Arrays.asList(
+                    match(LexicalUnit.SMALEQ)
+                ));
+            // [32] <Comp>  ->  <
+            case SMALLER:
+                ruleOutput(32,"<Comp>","<");
+                return new ParseTree(NonTerminal.Comp, Arrays.asList(
+                    match(LexicalUnit.SMALLER)
+                ));
+            default:
+                throw new ParseException(current,NonTerminal.Comp,Arrays.asList(
+                    LexicalUnit.EQUAL,
+                    LexicalUnit.SMALEQ,
+                    LexicalUnit.SMALLER
+                ));
+        }
+    }
+    
+    /**
+     * Treats a &lt;While&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [33]&nbsp;&lt;While&gt;&nbsp;&rarr;&nbsp;<code>WHILE</code>&nbsp;<code>{</code>&lt;Cond&gt;<code>}</code>&nbsp;<code>REPEAT</code>&nbsp;&lt;Code&gt;&nbsp;<code>END</code>
+     * 
+     * @return a ParseTree with a &lt;While&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree whileExpr() throws IOException, ParseException{
+        // [33] <While>  ->  WHILE {<Cond>} REPEAT <Code> END
+        ruleOutput(33,"<While>","WHILE <Cond> REPEAT <Code>");
+        return new ParseTree(NonTerminal.While, Arrays.asList(
+            match(LexicalUnit.WHILE),
+            match(LexicalUnit.LBRACK),
+            cond(),
+            match(LexicalUnit.RBRACK),
+            match(LexicalUnit.REPEAT),
+            code(),
+            match(LexicalUnit.END)
+        ));
+    }
+    
+    /**
+     * Treats a &lt;Output&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [34]&nbsp;&lt;Output&gt;&nbsp;&rarr;&nbsp;<code>OUT(</code>[Varname]<code>)</code>
+     * 
+     * @return a ParseTree with a &lt;Output&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
+     */
+    private ParseTree outputExpr() throws IOException, ParseException{
+        // [34] <Output>  ->  OUT([VarName])
+        ruleOutput(34,"<Output>","OUT([VarName])");
+        return new ParseTree(NonTerminal.Output, Arrays.asList(
+            match(LexicalUnit.OUTPUT),
+            match(LexicalUnit.LPAREN),
+            match(LexicalUnit.VARNAME),
+            match(LexicalUnit.RPAREN)
+        ));
     }
 
     /**
-     * Parses the if tail/if prime.
-     *
-     * The if tail is defined as:
-     * IfTail :== END | ELSE Code END
-     *
-     * @return the parse tree of the if tail
-     * @throws IOException if an I/O error occurs
+     * Treats a &lt;Input&gt; at the top of the stack.
+     * 
+     * Tries to apply rule [34]&nbsp;&lt;Input&gt;&nbsp;&rarr;&nbsp;<code>IN(</code>[Varname]<code>)</code>
+     * 
+     * @return a ParseTree with a &lt;Input&gt; non-terminal at the root.
+     * @throws IOException in case the lexing fails (syntax error).
+     * @throws ParseException in case the parsing fails (syntax error).
      */
-    private ParseTree ifTail() throws IOException {
-        if (currentToken.getType() == LexicalUnit.END) {
-            derivation.add(11); // Rule number [11]
-            // Match END
-            match(LexicalUnit.END);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.IFTAIL));
-        } else if (currentToken.getType() == LexicalUnit.ELSE) {
-            derivation.add(12); // Rule number [12]
-            // Match ELSE
-            match(LexicalUnit.ELSE);
-            // Parse <Code>
-            ParseTree codeTree = code();
-            // Match END
-            // System.out.println("REACHED HERE");
-            match(LexicalUnit.END);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.ELSE)),
-                    codeTree,
-                    new ParseTree(new Symbol(LexicalUnit.END))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.IFTAIL), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
+    private ParseTree inputExpr() throws IOException, ParseException{
+        // [34] <Input>  ->  IN([VarName])
+        ruleOutput(34,"<Input>","IN([VarName])");
+        return new ParseTree(NonTerminal.Input, Arrays.asList(
+            match(LexicalUnit.INPUT),
+            match(LexicalUnit.LPAREN),
+            match(LexicalUnit.VARNAME),
+            match(LexicalUnit.RPAREN)
+        ));
     }
 
-    /**
-     * Parses the while statement.
-     *
-     * The while statement is defined as:
-     * While :== WHILE { Cond } REPEAT Code END
-     *
-     * @return the parse tree of the while statement
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree whileStatement() throws IOException {
-        if (currentToken.getType() == LexicalUnit.WHILE) {
-            derivation.add(13); // Rule number [13]
-            // Match WHILE
-            match(LexicalUnit.WHILE);
-            // Match {
-            match(LexicalUnit.LBRACK);
-            // Parse <Cond>
-            ParseTree condTree = cond();
-            // Match }
-            match(LexicalUnit.RBRACK);
-            // Match REPEAT
-            match(LexicalUnit.REPEAT);
-            // Parse <Code>
-            ParseTree codeTree = code();
-            // Match END
-            match(LexicalUnit.END);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.WHILE)),
-                    new ParseTree(new Symbol(LexicalUnit.LBRACK)),
-                    condTree,
-                    new ParseTree(new Symbol(LexicalUnit.RBRACK)),
-                    new ParseTree(new Symbol(LexicalUnit.REPEAT)),
-                    codeTree,
-                    new ParseTree(new Symbol(LexicalUnit.END))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.WHILESTATEMENT), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
+/*
+    private ParseTree nonterminal() throws IOException, ParseException{
+        return new ParseTree(NonTerminal.TODO); // TODO
     }
-
-    /**
-     * Parses the output statement.
-     *
-     * The output statement is defined as:
-     * Output :== OUT ( [VarName] )
-     *
-     * @return the parse tree of the output statement
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree output() throws IOException {
-        if (currentToken.getType() == LexicalUnit.OUTPUT) {
-            derivation.add(14); // Rule number [14]
-            // Match OUT
-            match(LexicalUnit.OUTPUT);
-            // Match (
-            match(LexicalUnit.LPAREN);
-            // Match [VarName]
-            currentTokenValue = currentToken.getValue().toString();
-            match(LexicalUnit.VARNAME);
-            // Match )
-            match(LexicalUnit.RPAREN);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.OUTPUT)),
-                    new ParseTree(new Symbol(LexicalUnit.LPAREN)),
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue)),
-                    new ParseTree(new Symbol(LexicalUnit.RPAREN))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.OUTPUTSTATEMENT), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the input statement.
-     *
-     * The input statement is defined as:
-     * Input :== IN ( [VarName] )
-     *
-     * @return the parse tree of the input statement
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree input() throws IOException {
-        if (currentToken.getType() == LexicalUnit.INPUT) {
-            derivation.add(15); // Rule number [15]
-            // Match IN
-            match(LexicalUnit.INPUT);
-            // Match (
-            match(LexicalUnit.LPAREN);
-            // Match [VarName]
-            currentTokenValue = currentToken.getValue().toString();
-            match(LexicalUnit.VARNAME);
-            // Match )
-            match(LexicalUnit.RPAREN);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.INPUT)),
-                    new ParseTree(new Symbol(LexicalUnit.LPAREN)),
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue)),
-                    new ParseTree(new Symbol(LexicalUnit.RPAREN))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.INPUTSTATEMENT), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the arithmetic expression.
-     *
-     * The arithmetic expression is defined as:
-     * ExprArith :== Expr (This rule is redundant and could be removed!)
-     * Expr :== Term Expr'
-     *
-     * @return the parse tree of the arithmetic expression
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree exprArith() throws IOException {
-        if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
-            derivation.add(16); // Rule number [16] - Could remove this rule!
-            derivation.add(17); // Rule number [17]
-            // Parse <Term>
-            ParseTree termTree = term();
-            // Parse <ExprArithTail>
-            ParseTree exprArithTailTree = exprArithTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    termTree,
-                    exprArithTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.ARITHMETICEXPRESSION), children); // Could be NonTerminal.EXPRESSION also - Redundant rule 100%
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the term.
-     *
-     * The term is defined as:
-     * Term :== Unit Term'
-     *
-     * @return the parse tree of the term
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree term() throws IOException {
-        if (currentToken.getType() == LexicalUnit.MINUS || currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
-            derivation.add(22); // Rule number [22]
-            // Parse <Unit>
-            ParseTree unitFactorTree = unit();
-            // Parse <TermTail>
-            ParseTree termTailTree = termTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    unitFactorTree,
-                    termTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.TERM), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the arithmetic expression tail.
-     *
-     * The arithmetic expression tail is defined as:
-     * ExprArith' :== PlusMinus Term ExprArith' | EPSILON
-     *
-     * @return the parse tree of the arithmetic expression tail
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree exprArithTail() throws IOException {
-        if (currentToken.getType() == LexicalUnit.PLUS || currentToken.getType() == LexicalUnit.MINUS) {
-            derivation.add(18); // Rule number [18]
-            // Parse <PlusMinus>
-            ParseTree plusMinusTree = plusMinus();
-            // Parse <Term>
-            ParseTree termTree = term();
-            // Parse <ExprArithTail>
-            ParseTree exprArithTailTree = exprArithTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    plusMinusTree,
-                    termTree,
-                    exprArithTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.EXPRESSIONPRIME), children);
-        } else {
-            derivation.add(19); // Rule number [19]
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.EPSILON));
-        }
-    }
-
-    /**
-     * Parses the plus or minus operator.
-     *
-     * The plus or minus operator is defined as:
-     * PlusMinus :== + | -
-     *
-     * @return the parse tree of the plus or minus operator
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree plusMinus() throws IOException {
-        if (currentToken.getType() == LexicalUnit.PLUS) {
-            derivation.add(20); // Rule number [20]
-            // Match +
-            match(LexicalUnit.PLUS);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.PLUS));
-        } else if (currentToken.getType() == LexicalUnit.MINUS) {
-            derivation.add(21); // Rule number [21]
-            // Match -
-            match(LexicalUnit.MINUS);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.MINUS));
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the term tail.
-     *
-     * The term tail is defined as:
-     * Term' :== MulDiv Unit Term' | EPSILON
-     *
-     * @return the parse tree of the term tail
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree termTail() throws IOException {
-        if (currentToken.getType() == LexicalUnit.TIMES || currentToken.getType() == LexicalUnit.DIVIDE) {
-            derivation.add(23); // Rule number [23]
-            // Parse <MulDiv>
-            ParseTree mulDivTree = mulDiv();
-            // Parse <Unit>
-            ParseTree unitFactorTree = unit();
-            // Parse <TermTail>
-            ParseTree termTailTree = termTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    mulDivTree,
-                    unitFactorTree,
-                    termTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.TERMPRIME), children);
-        } else {
-            derivation.add(24); // Rule number [24]
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.EPSILON));
-        }
-    }
-
-    /**
-     * Parses the multiplication or division operator.
-     *
-     * The multiplication or division operator is defined as:
-     * MulDiv :== * | /
-     *
-     * @return the parse tree of the multiplication or division operator
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree mulDiv() throws IOException {
-        if (currentToken.getType() == LexicalUnit.TIMES) {
-            derivation.add(25); // Rule number [25]
-            // Match *
-            match(LexicalUnit.TIMES);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.MUL));
-        } else if (currentToken.getType() == LexicalUnit.DIVIDE) {
-            derivation.add(26); // Rule number [26]
-            // Match /
-            match(LexicalUnit.DIVIDE);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.DIV));
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the unit.
-     *
-     * The unit is defined as:
-     * Unit :== - Unit | [VarName] | [Number] | ( ExprArith )
-     *
-     * @return the parse tree of the unit
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree unit() throws IOException {
-        if (currentToken.getType() == LexicalUnit.MINUS) {
-            derivation.add(27); // Rule number [27]
-            // Parse <Minus>
-            match(LexicalUnit.MINUS);
-            return unit();
-        } else if (currentToken.getType() == LexicalUnit.VARNAME) {
-            derivation.add(28); // Rule number [28]
-            // Match [VarName]
-            currentTokenValue = currentToken.getValue().toString();
-            match(LexicalUnit.VARNAME);
-            // Build parse tree node
-            List<ParseTree> children = List.of(
-                    new ParseTree(new Symbol(LexicalUnit.VARNAME, currentTokenValue))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
-        } else if (currentToken.getType() == LexicalUnit.NUMBER) {
-            derivation.add(29); // Rule number [29]
-            // Match [Number]
-            currentTokenValue = currentToken.getValue().toString();
-            match(LexicalUnit.NUMBER);
-            // Build parse tree node
-            List<ParseTree> children = List.of(
-                    new ParseTree(new Symbol(LexicalUnit.NUMBER, currentTokenValue))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
-        } else if (currentToken.getType() == LexicalUnit.LPAREN) {
-            derivation.add(30); // Rule number [30]
-            // Match (
-            match(LexicalUnit.LPAREN);
-            // Parse <ExprArith>
-            ParseTree exprArithTree = exprArith();
-            // Match )
-            match(LexicalUnit.RPAREN);
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.LPAREN)),
-                    exprArithTree,
-                    new ParseTree(new Symbol(LexicalUnit.RPAREN))
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.UNIT), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the condition.
-     *
-     * The condition is defined as:
-     * Cond :== ExprArith Comp ExprArith Cond'
-     *      :== | Cond |
-     *
-     * @return the parse tree of the condition
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree cond() throws IOException {
-        if (currentToken.getType() == LexicalUnit.VARNAME || currentToken.getType() == LexicalUnit.NUMBER || currentToken.getType() == LexicalUnit.LPAREN) {
-            derivation.add(31); // Rule number [31]
-            // Parse <ExprArith>
-            ParseTree exprArithTree1 = exprArith();
-            // Parse <Comp>
-            ParseTree compTree = comp();
-            // Parse <ExprArith>
-            ParseTree exprArithTree2 = exprArith();
-            // Parse <CondTail>
-            ParseTree condTailTree = condTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    exprArithTree1,
-                    compTree,
-                    exprArithTree2,
-                    condTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.CONDITION), children);
-        } else if (currentToken.getType() == LexicalUnit.PIPE) {
-            derivation.add(32); // Rule number [32]
-            // Match |
-            match(LexicalUnit.PIPE);
-            // Parse <CondTail>
-            ParseTree condTailTree = condTail();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.PIPE)),
-                    condTailTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.CONDITION), children);
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
-
-    /**
-     * Parses the condition tail.
-     *
-     * The condition tail is defined as:
-     * Cond' :== -> Cond | EPSILON
-     *
-     * @return the parse tree of the condition tail
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree condTail() throws IOException {
-        if (currentToken.getType() == LexicalUnit.IMPLIES) {
-            derivation.add(36); // Rule number [33]
-            // Match ->
-            match(LexicalUnit.IMPLIES);
-            // Parse <Cond>
-            ParseTree condTree = cond();
-            // Build parse tree node
-            List<ParseTree> children = Arrays.asList(
-                    new ParseTree(new Symbol(LexicalUnit.IMPLIES)),
-                    condTree
-            );
-            return new ParseTree(new Symbol(null, NonTerminal.CONDITIONPRIME), children);
-        } else {
-            derivation.add(37); // Rule number [34] (Epsilon)
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.EPSILON));
-        }
-    }
-
-    /**
-     * Parses the comparison operator.
-     *
-     * The comparison operator is defined as:
-     * Comp :== == | &lt;= | &lt;
-     *
-     * @return the parse tree of the comparison operator
-     * @throws IOException if an I/O error occurs
-     */
-    private ParseTree comp() throws IOException {
-        if (currentToken.getType() == LexicalUnit.EQUAL) {
-            derivation.add(35); // Rule number [35]
-            // Match ==
-            match(LexicalUnit.EQUAL);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.COMPARISON));
-        } else if (currentToken.getType() == LexicalUnit.SMALEQ) {
-            derivation.add(36); // Rule number [36]
-            // Match <=
-            match(LexicalUnit.SMALEQ);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.COMPARISON));
-        } else if (currentToken.getType() == LexicalUnit.SMALLER) {
-            derivation.add(37); // Rule number [37]
-            // Match <
-            match(LexicalUnit.SMALLER);
-            // Build parse tree node
-            return new ParseTree(new Symbol(null, NonTerminal.COMPARISON));
-        } else {
-            unexpectedToken();
-            return null;
-        }
-    }
+*/
 }
