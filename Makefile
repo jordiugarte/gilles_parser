@@ -14,7 +14,7 @@ DIST_DIR = ${PWD}/dist
 MORE_DIR = ${PWD}/more
 MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
 
-JAR_NAME = $(DIST_DIR)/part2.jar
+JAR_NAME = $(DIST_DIR)/part3.jar
 
 TEST_DIR = ${PWD}/test
 TEST_FILE ?= ${TEST_DIR}/Euclid.gls
@@ -46,8 +46,8 @@ test:
 
 	@# If there was a .tex file specified, then generate the LaTeX and PDF files, else we're done!
 	@$(if ${OUTPUT_TEX_FILE}, $(PDFLATEX) -output-directory=$(MORE_DIR) $(OUTPUT_TEX_FILE) > /dev/null 2>&1)
-	@#@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf)
-	@#$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part2.pdf")
+	@#@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf)
+	@#$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf")
 
 clean:
 	# Remove all .class and auto-generated files
