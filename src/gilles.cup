@@ -1,0 +1,55 @@
+import java_cup.runtime.*;        // Necessary
+import java.io.InputStreamReader; // To read input from command-line
+
+parser code {://code to add into generated parser
+    private static Parser instance;
+
+    public static void main(String[] args)throws Exception{
+        // Simplest interactive shell
+        instance = new Parser(new Lexer(new InputStreamReader(System.in)));
+        instance.parse();
+    }
+:}
+
+/* Terminals (tokens returned by the scanner). */
+terminal           EOL, PLUS, MINUS, TIMES, DIVIDE;
+terminal           LPAREN, RPAREN, UMINUS; // UMINUS is unary minus: not from scanner but from context
+terminal Integer   NUMBER;
+
+/* Non-terminals */
+non terminal            Program, Code, Instruction, Assign, While, Call, Output, Input;
+non terminal            ExprArith, ExprArithPrime, Prod, ProdPrime, Atom, If, IfTail;
+non terminal            Cond, CondPrimer, SimpleCond, Comp;
+
+non terminal Integer    expr;
+
+/* Precedences */
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left UMINUS;
+
+/* The grammar */
+expr_list ::= expr_list expr_part
+            | expr_part
+          ;
+
+expr_part ::= expr:e
+              {: System.out.println("= " + e); :}
+              EOL
+          ;
+
+expr      ::= expr:e1 PLUS expr:e2
+              {: RESULT = e1 + e2; :}
+            | expr:e1 MINUS expr:e2
+              {: RESULT = e1 - e2; :}
+            | expr:e1 TIMES expr:e2
+              {: RESULT = e1 * e2; :}
+            | expr:e1 DIVIDE expr:e2
+              {: RESULT = e1 / e2; :}
+            | NUMBER:n
+              {: RESULT = n; :}
+            | MINUS expr:e
+              {: RESULT = - e; :} %prec UMINUS // Contextual precedence
+            | LPAREN expr:e RPAREN
+              {: RESULT = e; :}
+          ;
