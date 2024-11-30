@@ -8,6 +8,7 @@ parser code {://code to add into generated parser
         // Simplest interactive shell
         instance = new Parser(new Lexer(new InputStreamReader(System.in)));
         instance.parse();
+        System.out.println(llvmCode.toString());
     }
 :}
 
@@ -24,14 +25,13 @@ non terminal            Program, Code, Instruction, Assign, While, Output, Input
 non terminal            ExprArith, ExprArithPrime, Prod, ProdPrime, Atom, If, IfTail;
 non terminal            Cond, CondPrime, SimpleCond, Comp;
 
-/* Precedences */
-// precedence left PLUS, MINUS;
-// precedence left TIMES, DIVIDE;
-// precedence left UMINUS;
-
 /* The grammar */
-Program           ::= LET ProgName BE Code END
-                    ;
+Program           ::= LET ProgName:pn BE Code:cd END
+                    {: 
+                        header();
+                        $cd;
+                        footer();
+                    :};
 Code              ::= Instruction COLUMN Code
                     | /* epsilon */
                     ;
