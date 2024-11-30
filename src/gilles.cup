@@ -1,0 +1,85 @@
+import java_cup.runtime.*;        // Necessary
+import java.io.InputStreamReader; // To read Input from command-line
+
+parser code {://code to add into generated parser
+    private static Parser instance;
+
+    public static void main(String[] args)throws Exception{
+        // Simplest interactive shell
+        instance = new Parser(new Lexer(new InputStreamReader(System.in)));
+        instance.parse();
+    }
+:}
+
+/* Terminals (tokens returned by the scanner). */
+terminal          LET, BE, END, IF, THEN, ELSE, WHILE, REPEAT;
+terminal          OUT, IN, COLUMN, ASSIGN, PLUS, MINUS, TIMES, DIVIDE;
+terminal          LPAREN, RPAREN, LBRACK, RBRACK, EQUAL;
+terminal          SMALLEQ, SMALLER, IMPLIES, PIPE;
+terminal String   ProgName, VarName;
+terminal Integer  Number;
+
+/* Non-terminals */
+non terminal            Program, Code, Instruction, Assign, While, Output, Input;
+non terminal            ExprArith, ExprArithPrime, Prod, ProdPrime, Atom, If, IfTail;
+non terminal            Cond, CondPrime, SimpleCond, Comp;
+
+/* Precedences */
+// precedence left PLUS, MINUS;
+// precedence left TIMES, DIVIDE;
+// precedence left UMINUS;
+
+/* The grammar */
+Program           ::= LET ProgName BE Code END
+                    ;
+Code              ::= Instruction COLUMN Code
+                    | /* epsilon */
+                    ;
+Instruction       ::= Assign
+                    | If
+                    | While
+                    | Output
+                    | Input
+                    ;
+Assign            ::= VarName ASSIGN ExprArith
+                    ;
+ExprArith         ::= Prod ExprArithPrime
+                    ;
+ExprArithPrime    ::= PLUS Prod ExprArithPrime
+                    | MINUS Prod ExprArithPrime
+                    | /* epsilon */
+                    ;
+Prod              ::= Atom ProdPrime
+                    ;
+ProdPrime         ::= TIMES Atom ProdPrime
+                    | DIVIDE Atom ProdPrime
+                    | /* epsilon */
+                    ;
+Atom              ::= VarName
+                    | Number
+                    | LPAREN ExprArith RPAREN
+                    | MINUS Atom
+                    ;
+If                ::= IF LBRACK Cond RBRACK THEN Code IfTail
+                    ;
+IfTail            ::= END
+                    | ELSE Code END
+                    ;
+Cond              ::= SimpleCond CondPrime
+                    ;
+CondPrime         ::= IMPLIES Cond
+                    | /* epsilon */
+                    ;
+SimpleCond        ::= PIPE Cond PIPE
+                    | ExprArith Comp ExprArith
+                    ;
+Comp              ::= EQUAL
+                    | SMALLEQ
+                    | SMALLER
+                    ;
+While             ::= WHILE LBRACK Cond RBRACK REPEAT Code END
+                    ;
+Output            ::= OUT LPAREN VarName RPAREN
+                    ;
+Input             ::= IN LPAREN VarName RPAREN
+                    ;
