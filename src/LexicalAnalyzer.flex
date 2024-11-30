@@ -1,5 +1,4 @@
 
-import java_cup.runtime.*; // Loading CUP library
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -15,7 +14,6 @@ import java.util.regex.PatternSyntaxException;
 %unicode               // Use unicode
 %line                  // Use line counter (yyline variable)
 %column                // Use character counter by line (yycolumn variable)
-%cup         //Use cup Java functions, returned objects will be of the Symbols class
 
 %function nextToken
 %type Symbol

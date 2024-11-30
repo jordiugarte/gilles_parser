@@ -1,14 +1,47 @@
 import java_cup.runtime.*;        // Necessary
 import java.io.InputStreamReader; // To read Input from command-line
 
-parser code {://code to add into generated parser
+parser code {:
+    private static String BREAK = "\n";
+
     private static Parser instance;
+    
+    private static StringBuilder finalResult = new StringBuilder();
+    private static List<String> variables = new ArrayList<String>();
 
     public static void main(String[] args)throws Exception{
         // Simplest interactive shell
         instance = new Parser(new Lexer(new InputStreamReader(System.in)));
         instance.parse();
         System.out.println(llvmCode.toString());
+    }
+
+    private String header(String progName) {
+        finalResult.append("; ModuleID = " + progName + BREAK)
+                    .append("declare i32 @printf(i8*, ...)" + BREAK)
+                    .append("@.str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\"" + BREAK + BREAK);
+        return null;
+    }
+
+    private static String column() {
+        finalResult.append(BREAK);
+        return null;
+    }
+
+    private static String footer() {
+        finalResult.append("ret i32 0\n");
+        return null;
+    }
+
+    private static String assign(String varName, String value) {
+        if (variables.contains(varName)) {
+            //RETURN ERROR
+        } else {
+            String var = "%" + varName;
+            finalResult.append(var + " = store i32, align 4" + BREAK);
+            finalResult.append("store i32 " + value + ", i32* " + var + BREAK);
+        }
+        return null;
     }
 :}
 
@@ -32,8 +65,13 @@ Program           ::= LET ProgName:pn BE Code:cd END
                         $cd;
                         footer();
                     :};
-Code              ::= Instruction COLUMN Code
-                    | /* epsilon */
+Code              ::= Instruction:in COLUMN:col Code:cd 
+                    {:
+                        $in;
+                        column();
+                        $cd;
+                    :}
+                    | /* epsilon */ {: :}
                     ;
 Instruction       ::= Assign
                     | If
@@ -41,9 +79,15 @@ Instruction       ::= Assign
                     | Output
                     | Input
                     ;
-Assign            ::= VarName ASSIGN ExprArith
+Assign            ::= VarName:vn ASSIGN ExprArith:ea
+                    {:
+                        assign($vn, $ea);
+                    :}
                     ;
 ExprArith         ::= Prod ExprArithPrime
+                    {:
+                        
+                    :}
                     ;
 ExprArithPrime    ::= PLUS Prod ExprArithPrime
                     | MINUS Prod ExprArithPrime
