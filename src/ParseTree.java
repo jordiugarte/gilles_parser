@@ -197,4 +197,12 @@ public class ParseTree {
     public String toLaTeX() {
         return this.toLaTeXusingForest();
     }
+
+    public Symbol getLabel() {
+        return label;
+    }
+
+    public List<ParseTree> getChildren() {
+        return children;
+    }
 }
