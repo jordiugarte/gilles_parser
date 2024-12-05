@@ -75,8 +75,8 @@ public class Main{
             try {
                 parseTree = parser.parse();
 
-//                Test of the new parser
-                System.out.println(new LLVMParser().generateCode(parseTree));
+//                Test of the new parser TODO
+                System.out.println(new LLVMParser().generate(parseTree));
                 if (writeTree) {tex=parseTree.toLaTeX();};
             } catch (ParseException e) {
                 System.out.println("Error:> " + e.getMessage());

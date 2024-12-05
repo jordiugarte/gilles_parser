@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class LLVMParser extends LLVMParserInterface {
+public class LLVMParser {
 
     private StringBuilder finalOutput = new StringBuilder();
     private Map<String, String> variables = new HashMap<>();
@@ -9,233 +9,206 @@ public class LLVMParser extends LLVMParserInterface {
     private int tempCount;
     private int labelCount;
 
-    public String generateCode(ParseTree node) {
-        generate(node);
-        finalOutput.append("ret i32 0\n"); // Add LLVM footer
-        return finalOutput.toString();
+    private String line(String input) {
+        return input.concat("\n");
     }
 
-    protected void generate(ParseTree node) {
-        if (node.getLabel().toString().startsWith("Non-terminal symbol: ")) {
-            String symbol = node.getLabel().toString().split("Non-terminal symbol: ")[1];
-            System.out.println(symbol);
-            switch (symbol) {
-                case "Program":
-                    program(node);
-                    break;
-                case "Code":
-                    code(node);
-                    break;
-                case "Instruction":
-                    instruction(node);
-                    break;
-                case "Assign":
-                    assign(node);
-                    break;
-                case "ExprArith":
-                    exprArith(node);
-                    break;
-                case "ExprArith'":
-                    exprArithPrime(node);
-                    break;
-                case "Prod":
-                    prod(node);
-                    break;
-                case "Prod'":
-                    prodPrime(node);
-                    break;
-                case "Atom":
-                    atom(node);
-                    break;
-                case "Output":
-                    output(node);
-                    break;
-                case "If":
-                    iF(node);
-                    break;
-                case "While":
-                    whilE(node);
-                    break;
-                default:
-                    for (ParseTree child : node.getChildren()) {
-                        generate(child);
-                    }
-                    break;
-            }
-        } else if (node.getLabel().toString().startsWith("token: ")) {
-            String token = node.getLabel().toString().replaceAll(" ", "").split("token:")[1].split("lexicalunit")[0];
-            String lexicalUnit = node.getLabel().toString().split("lexical unit: ")[1];
-            //TODO
+    public String generate(ParseTree node) {
+        String expression = node.getLabel().toString();
+        if (expression.startsWith("Non-terminal symbol: ")) {
+            String nonTerminal = expression.split("Non-terminal symbol: ")[1];
+            return switch (nonTerminal) {
+                case "Program" -> program(node);
+                case "Code" -> code(node);
+                case "Instruction" -> instruction(node);
+                case "Assign" -> assign(node);
+                case "ExprArith" -> exprArith(node);
+                case "ExprArith'" -> exprArithPrime(node);
+                case "Prod" -> prod(node);
+                case "Prod'" -> prodPrime(node);
+                case "Atom" -> atom(node);
+                case "Input" -> input(node);
+                case "Output" -> output(node);
+                case "If" -> iF(node);
+                case "While" -> whilE(node);
+                default -> throw new RuntimeException("Unknown Non-terminal Expression");
+            };
         } else {
-            //TODO
+            // Terminal symbols
+            String terminal = expression.split("lexical unit: ")[1];
+            String token = expression.split("lexical unit: ")[0].split("token: ")[1].replaceAll(" ", "");
+            return switch (terminal) {
+                case "[ProgName]" -> "@" + token;
+                case "[VarName]" -> "i32 %" + token;
+                case "[Number]" -> token;
+                case "LET" -> "define i32 ";
+                case "BE" -> "(";
+                case "END" -> line("}");
+                case "COLUMN" -> line("");
+                default -> "";
+            };
         }
     }
 
-    @Override
-    protected void program(ParseTree node) {
+    private String program(ParseTree node) {
         // Program -> LET [ProgName] BE <Code> END
-        finalOutput.append(line("; ModuleID = 'Hello world'"))
-                .append(line("declare i32 @printf(i8*, ...)"))
-                .append(line("@.str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\""));
-        generate(node.getChildren().get(3)); // Traverse <Code>
+        return generate(node.getChildren().get(0)) +
+                generate(node.getChildren().get(1)) +
+                generate(node.getChildren().get(2)) +
+                line(generate(node.getChildren().get(3))) +
+                line(generate(node.getChildren().get(4)));
     }
 
-    @Override
-    protected void code(ParseTree node) {
+    private String code(ParseTree node) {
         // Code -> <Instruction> : <Code> | epsilon
-        if (node.getChildren().size() == 3) { // Non-epsilon
-            generate(node.getChildren().get(0)); // Traverse <Instruction>
-            generate(node.getChildren().get(2)); // Traverse <Code>
+        if (node.getChildren().size() > 1) {
+            return line(generate(node.getChildren().getFirst())) +
+                    line(generate(node.getChildren().get(2)));
         }
+        return "";
     }
 
-    @Override
-    protected void instruction(ParseTree node) {
-        // Instruction -> <Assign> | <If> | <While> | <Output>
-        generate(node.getChildren().get(0));
+    private String instruction(ParseTree node) {
+        // Instruction -> <Assign> | <If> | <While> | <Output> | <Input>
+        return line(generate(node.getChildren().getFirst()));
     }
 
-    @Override
-    protected void assign(ParseTree node) {
+    private String assign(ParseTree node) {
         // Assign -> VarName = <ExprArith>
-        String varName = node.getChildren().get(0).getLabel().getValue().toString();
-        generate(node.getChildren().get(2)); // Traverse <ExprArith>
-        String tempVar = "%" + (tempCount - 1); // The result of <ExprArith>
-        String llvmVar = variables.computeIfAbsent(varName, v -> "@" + v);
-        finalOutput.append("store i32 ").append(tempVar).append(", i32* ").append(llvmVar).append("\n");
+//        String varName = node.getChildren().get(0).getLabel().getValue().toString();
+//        generate(node.getChildren().get(2)); // Traverse <ExprArith>
+//        String tempVar = "%" + (tempCount - 1); // The result of <ExprArith>
+//        String llvmVar = variables.computeIfAbsent(varName, v -> "@" + v);
+//        finalOutput.append("store i32 ").append(tempVar).append(", i32* ").append(llvmVar).append("\n");
+        return "";
     }
 
-    @Override
-    protected void exprArith(ParseTree node) {
+    private String exprArith(ParseTree node) {
         // ExprArith -> <Prod> <ExprArith'>
-        generate(node.getChildren().get(0)); // generate <Prod>
-        generate(node.getChildren().get(1)); // generate <ExprArith'>
+//        generate(node.getChildren().get(0)); // generate <Prod>
+//        generate(node.getChildren().get(1)); // generate <ExprArith'>
+        return "";
     }
 
-    @Override
-    protected void exprArithPrime(ParseTree node) {
+    private String exprArithPrime(ParseTree node) {
         // ExprArith' -> + <Prod> <ExprArith'> | epsilon
-        if (node.getChildren().size() == 3) {
-            generate(node.getChildren().get(1)); // generate <Prod>
-            String right = "%" + (tempCount - 1);
-            String left = "%" + (tempCount - 2);
-            String result = "%" + tempCount++;
-            finalOutput.append(result).append(" = add i32 ").append(left).append(", ").append(right).append("\n");
-            generate(node.getChildren().get(2)); // generate <ExprArith'>
-        }
+//        if (node.getChildren().size() == 3) {
+//            generate(node.getChildren().get(1)); // generate <Prod>
+//            String right = "%" + (tempCount - 1);
+//            String left = "%" + (tempCount - 2);
+//            String result = "%" + tempCount++;
+//            finalOutput.append(result).append(" = add i32 ").append(left).append(", ").append(right).append("\n");
+//            generate(node.getChildren().get(2)); // generate <ExprArith'>
+//        }
+        return "";
     }
 
-    @Override
-    protected void prod(ParseTree node) {
+    private String prod(ParseTree node) {
         // Prod -> <Atom> <Prod'>
-        generate(node.getChildren().get(0)); // generate <Atom>
-        generate(node.getChildren().get(1)); // generate <Prod'>
+//        generate(node.getChildren().get(0)); // generate <Atom>
+//        generate(node.getChildren().get(1)); // generate <Prod'>
+        return "";
     }
 
-    @Override
-    protected void prodPrime(ParseTree node) {
+    private String prodPrime(ParseTree node) {
         // Prod' -> * <Atom> <Prod'> | epsilon
-        if (node.getChildren().size() == 3) {
-            generate(node.getChildren().get(1)); // generate <Atom>
-            String right = "%" + (tempCount - 1);
-            String left = "%" + (tempCount - 2);
-            String result = "%" + tempCount++;
-            finalOutput.append(result).append(" = mul i32 ").append(left).append(", ").append(right).append("\n");
-            generate(node.getChildren().get(2)); // generate <Prod'>
-        }
+//        if (node.getChildren().size() == 3) {
+//            generate(node.getChildren().get(1)); // generate <Atom>
+//            String right = "%" + (tempCount - 1);
+//            String left = "%" + (tempCount - 2);
+//            String result = "%" + tempCount++;
+//            finalOutput.append(result).append(" = mul i32 ").append(left).append(", ").append(right).append("\n");
+//            generate(node.getChildren().get(2)); // generate <Prod'>
+//        }
+        return "";
     }
 
-    @Override
-    protected void atom(ParseTree node) {
+    private String atom(ParseTree node) {
         // Atom -> [Number] | [VarName] | ( <ExprArith> )
-        if (node.getChildren().get(0).getLabel().getType() == LexicalUnit.NUMBER) {
-            String number = node.getChildren().get(0).getLabel().getValue().toString();
-            String result = "%" + tempCount++;
-            finalOutput.append(result).append(" = add i32 0, ").append(number).append("\n");
-        } else if (node.getChildren().get(0).getLabel().getType() == LexicalUnit.VARNAME) {
-            String varName = node.getChildren().get(0).getLabel().getValue().toString();
-            String llvmVar = variables.computeIfAbsent(varName, v -> "@" + v);
-            String result = "%" + tempCount++;
-            finalOutput.append(result).append(" = load i32, i32* ").append(llvmVar).append("\n");
-        } else {
-            generate(node.getChildren().get(1)); // generate <ExprArith>
-        }
+//        if (node.getChildren().get(0).getLabel().getType() == LexicalUnit.NUMBER) {
+//            String number = node.getChildren().get(0).getLabel().getValue().toString();
+//            String result = "%" + tempCount++;
+//            finalOutput.append(result).append(" = add i32 0, ").append(number).append("\n");
+//        } else if (node.getChildren().get(0).getLabel().getType() == LexicalUnit.VARNAME) {
+//            String varName = node.getChildren().get(0).getLabel().getValue().toString();
+//            String llvmVar = variables.computeIfAbsent(varName, v -> "@" + v);
+//            String result = "%" + tempCount++;
+//            finalOutput.append(result).append(" = load i32, i32* ").append(llvmVar).append("\n");
+//        } else {
+//            generate(node.getChildren().get(1)); // generate <ExprArith>
+//        }
+        return "";
     }
 
-    @Override
-    protected void iF(ParseTree node) {
-        // If -> IF { <Cond> } THEN <Code> END
-        String trueLabel = "label_" + labelCount++;
-        String endLabel = "label_" + labelCount++;
-
-        generate(node.getChildren().get(2)); // generate <Cond>
-        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(trueLabel).append(", label %").append(endLabel).append("\n");
-
-        finalOutput.append(trueLabel).append(":\n");
-        generate(node.getChildren().get(5)); // generate <Code>
-        finalOutput.append("br label %").append(endLabel).append("\n");
-
-        finalOutput.append(endLabel).append(":\n");
+    private String iF(ParseTree node) {
+//        // If -> IF { <Cond> } THEN <Code> END
+//        String trueLabel = "label_" + labelCount++;
+//        String endLabel = "label_" + labelCount++;
+//
+//        generate(node.getChildren().get(2)); // generate <Cond>
+//        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(trueLabel).append(", label %").append(endLabel).append("\n");
+//
+//        finalOutput.append(trueLabel).append(":\n");
+//        generate(node.getChildren().get(5)); // generate <Code>
+//        finalOutput.append("br label %").append(endLabel).append("\n");
+//
+//        finalOutput.append(endLabel).append(":\n");
+        return "";
     }
 
-    @Override
-    protected void ifTail(ParseTree node) {
-
+    private String ifTail(ParseTree node) {
+        return "";
     }
 
-    @Override
-    protected void cond(ParseTree node) {
-
+    private String cond(ParseTree node) {
+        return "";
     }
 
-    @Override
-    protected void condPrime(ParseTree node) {
-
+    private String condPrime(ParseTree node) {
+        return "";
     }
 
-    @Override
-    protected void simpleCond(ParseTree node) {
-
+    private String simpleCond(ParseTree node) {
+        return "";
     }
 
-    @Override
-    protected void comp(ParseTree node) {
+    private String comp(ParseTree node) {
         // While -> WHILE { <Cond> } REPEAT <Code> END
-        String startLabel = "label_" + labelCount++;
-        String bodyLabel = "label_" + labelCount++;
-        String endLabel = "label_" + labelCount++;
-
-        finalOutput.append("br label %").append(startLabel).append("\n");
-        finalOutput.append(startLabel).append(":\n");
-
-        generate(node.getChildren().get(2)); // generate <Cond>
-        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(bodyLabel).append(", label %").append(endLabel).append("\n");
-
-        finalOutput.append(bodyLabel).append(":\n");
-        generate(node.getChildren().get(5)); // generate <Code>
-        finalOutput.append("br label %").append(startLabel).append("\n");
-
-        finalOutput.append(endLabel).append(":\n");
+//        String startLabel = "label_" + labelCount++;
+//        String bodyLabel = "label_" + labelCount++;
+//        String endLabel = "label_" + labelCount++;
+//
+//        finalOutput.append("br label %").append(startLabel).append("\n");
+//        finalOutput.append(startLabel).append(":\n");
+//
+//        generate(node.getChildren().get(2)); // generate <Cond>
+//        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(bodyLabel).append(", label %").append(endLabel).append("\n");
+//
+//        finalOutput.append(bodyLabel).append(":\n");
+//        generate(node.getChildren().get(5)); // generate <Code>
+//        finalOutput.append("br label %").append(startLabel).append("\n");
+//
+//        finalOutput.append(endLabel).append(":\n");
+        return "";
     }
 
-    @Override
-    protected void whilE(ParseTree node) {
-
+    private String whilE(ParseTree node) {
+        return "";
     }
 
-    @Override
-    protected void output(ParseTree node) {
+    private String output(ParseTree node) {
         // Output -> OUT([VarName])
-        String varName = node.getChildren().get(2).getLabel().getValue().toString();
-        String llvmVar = variables.get(varName);
-        String temp = "%" + tempCount++;
-        finalOutput.append(temp).append(" = load i32, i32* ").append(llvmVar).append("\n")
-                .append("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 ")
-                .append(temp).append(")\n");
+//        String varName = node.getChildren().get(2).getLabel().getValue().toString();
+//        String llvmVar = variables.get(varName);
+//        String temp = "%" + tempCount++;
+//        finalOutput.append(temp).append(" = load i32, i32* ").append(llvmVar).append("\n")
+//                .append("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 ")
+//                .append(temp).append(")\n");
+        return "";
     }
 
-    @Override
-    protected void input(ParseTree node) {
-
+    private String input(ParseTree node) {
+        // <Input> → IN ( [VarName] )
+        return "," + generate(node.getChildren().get(2));
     }
 }
