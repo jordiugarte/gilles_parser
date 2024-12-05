@@ -18,6 +18,16 @@ public class LLVMParser {
         return input.concat("\n");
     }
 
+    private String variableRegistration(String var) {
+        // Returns the variable name or its 'val' name if it was already registered
+        if (variables.containsKey(var)) {
+            return variables.get(var);
+        } else {
+            variables.put(var, var.concat("_val"));
+            return var;
+        }
+    }
+
     public String generate(ParseTree node) {
         String expression = node.getLabel().toString();
         if (expression.startsWith("Non-terminal symbol: ")) {
@@ -43,7 +53,6 @@ public class LLVMParser {
             String terminal = expression.split("lexical unit: ")[1];
             String token = expression.split("lexical unit: ")[0].split("token: ")[1].replaceAll("\\s", "");
             return switch (terminal) {
-//                case "[ProgName]" -> "@" + token;
                 case "[ProgName]" -> "@main()";
                 case "[VarName]", "[Number]" -> token;
                 case "LET" -> "define i32 ";
@@ -60,16 +69,17 @@ public class LLVMParser {
 
     private String program(ParseTree node) {
         // Program -> LET [ProgName] BE <Code> END
-        return line("@.str_in = private constant [3 x i8] c\"%d\\00\"") +
-                line("@.str_out = private constant [4 x i8] c\"%d\\n\\00\"") +
+        return line("@.str_in = private unnamed_addr constant [3 x i8] c\"%d\\00\"") +
+                line("@.str_out = private unnamed_addr constant [5 x i8] c\"%d\\n\\00\"") +
                 line("declare i32 @scanf(i8*, ...)") +
                 line("declare i32 @printf(i8*, ...)") +
-                line("%fmt_in = getelementptr [3 x i8], [3 x i8]* @.str_in, i32 0, i32 0") +
-                line("%fmt_out = getelementptr [4 x i8], [4 x i8]* @.str_out, i32 0, i32 0") +
                 line() +
                 generate(node.getChildren().get(0)) +
                 generate(node.getChildren().get(1)) +
                 generate(node.getChildren().get(2)) +
+                line("entry:") +
+                line("%fmt_in = getelementptr inbounds [3 x i8], [3 x i8]* @.str_in, i32 0, i32 0") +
+                line("%fmt_out = getelementptr inbounds [4 x i8], [4 x i8]* @.str_out, i32 0, i32 0") +
                 line(generate(node.getChildren().get(3))) +
                 line(generate(node.getChildren().get(4)));
     }
@@ -211,16 +221,6 @@ public class LLVMParser {
         String var = variableRegistration(generate(node.getChildren().get(2)) + "_input");
         return line("%" + var + " = alloca i32") +
                 line("call i32 (i8*, ...) @scanf(i8* %fmt_in, i32* %" + var + ")") +
-                line(variableRegistration(var) + generate(node.getChildren().get(1)) + " = load i32, i32* " + var);
-    }
-
-    private String variableRegistration(String var) {
-        // Returns the variable name or its 'val' name if it was already registered
-        if (variables.containsKey(var)) {
-            return variables.get(var);
-        } else {
-            variables.put(var, var.concat("_val"));
-            return var;
-        }
+                line("%" + variableRegistration(var) + generate(node.getChildren().get(1)) + " = load i32, i32* %" + var);
     }
 }
