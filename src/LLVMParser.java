@@ -69,7 +69,7 @@ public class LLVMParser {
             String token = expression.split("lexical unit: ")[0].split("token: ")[1].replaceAll("\\s", "");
             return switch (terminal) {
                 case "[ProgName]" -> "@main()";
-                case "[VarName]" -> "%" + token;
+                case "[VarName]" -> "%" + variableRegistration(token);
                 case "[Number]" -> token;
                 case "LET" -> "define i32 ";
                 case "BE" -> line(" {");
@@ -143,13 +143,14 @@ public class LLVMParser {
 
     private String assign(ParseTree node) {
         // Assign -> [VarName] = <ExprArith>
-        String varName = look(node.getChildren().get(0)); // VarName
-        String exprArith = look(node.getChildren().get(2)); // ExprArith
+        String varName = look(node.getChildren().get(0));
+        String exprArith = look(node.getChildren().get(2));
 
         String varLLVM = variableRegistration(varName);
-        return line(varLLVM + " = alloca i32") +
+        return line(varLLVM + " = alloca i32, align 4") +
                 exprArith +
-                line("store i32 " + getCurrentTempVar() + ", i32* " + varLLVM);
+                line("store i32 " + getCurrentTempVar() + ", i32* " + varLLVM + ", align 4") +
+                line(variableRegistration(varLLVM) + " = load i32, i32* " + varLLVM + ", align 4 ");
     }
 
     private String exprArith(ParseTree node) {
@@ -164,7 +165,7 @@ public class LLVMParser {
         if (operator.isEmpty()) {
             return prod;
         } else {
-            return operationLine(operator, firstAtom, look(node.getChildren().get(1)));
+            return getNewTempVar() + " = " + operationLine(operator, firstAtom, look(node.getChildren().get(1)));
         }
     }
 
@@ -287,16 +288,12 @@ public class LLVMParser {
 
     private String input(ParseTree node) {
         // <Input> → IN ( [VarName] )
-        String var = variableRegistration(look(node.getChildren().get(2)));
-        return line(var + " = call i32 @readInt()") +
-                line(variableRegistration(var) + " = load i32, i32* %x");
+        String var = look(node.getChildren().get(2));
+        variableRegistration(var);
+        return line(variableRegistration(var) + " = call i32 @readInt()");
     }
 
     private String getFirst(ParseTree node) {
-        return look(node.getChildren().getFirst());
-    }
-
-    private String getFollow(ParseTree node) {
         return look(node.getChildren().getFirst());
     }
 
