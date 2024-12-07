@@ -136,7 +136,7 @@ public enum LexicalUnit{
                 n="|";
                 break;
             case EQUAL:
-                n="=";
+                n="==";
                 break;
             case SMALLER:
                 n="<";

@@ -1,14 +1,10 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LLVMParser {
 
     private final Map<String, String> variables = new HashMap<>();
 
-    private int inputCounter;
-    private int labelCount;
+    private int ifCounter, whileCounter, tempCounter;
 
     private String line() {
         return line("");
@@ -28,7 +24,21 @@ public class LLVMParser {
         }
     }
 
-    public String generate(ParseTree node) {
+    private String getCurrentTempVar() {
+        return "%tmp" + tempCounter;
+    }
+
+    private String getNewTempVar() {
+        tempCounter++;
+        return getCurrentTempVar();
+    }
+
+    public String generate(ParseTree parseTree) {
+        String result = look(parseTree);
+        return result;
+    }
+
+    public String look(ParseTree node) {
         String expression = node.getLabel().toString();
         if (expression.startsWith("Non-terminal symbol: ")) {
             String nonTerminal = expression.split("Non-terminal symbol: ")[1];
@@ -45,8 +55,13 @@ public class LLVMParser {
                 case "Input" -> input(node);
                 case "Output" -> output(node);
                 case "If" -> iF(node);
+                case "Cond" -> cond(node);
+                case "Cond'" -> condPrime(node);
+                case "Comp" -> comp(node);
+                case "SimpleCond" -> simpleCond(node);
+                case "IfTail" -> ifTail(node);
                 case "While" -> whilE(node);
-                default -> throw new RuntimeException("Unknown Non-terminal Expression");
+                default -> throw new RuntimeException("Unknown Non-terminal Expression: " + nonTerminal);
             };
         } else {
             // Terminal symbols
@@ -54,173 +69,238 @@ public class LLVMParser {
             String token = expression.split("lexical unit: ")[0].split("token: ")[1].replaceAll("\\s", "");
             return switch (terminal) {
                 case "[ProgName]" -> "@main()";
-                case "[VarName]", "[Number]" -> token;
+                case "[VarName]" -> "%" + token;
+                case "[Number]" -> token;
                 case "LET" -> "define i32 ";
                 case "BE" -> line(" {");
                 case "END" -> line("ret i32 0") + line("}");
-                case "COLUMN" -> line("");
+                case "COLUMN" -> line();
                 case "OUT" -> "ret ";
-                case "+" -> " add ";
+                case "+" -> "add";
+                case "-" -> "sub";
+                case "*" -> "mul";
+                case "/" -> "sdiv";
                 case "=" -> " = ";
+                case "==" -> " icmp ";
+                case "<=" -> " icmp sle ";
+                case "<" -> " icmp slt ";
+                case "->" -> " and ";
                 default -> "";
             };
         }
     }
 
+    private String inputDefinition() {
+        return "@.strR = private unnamed_addr constant [3 x i8] c\"%d\\00\", align 1\n" +
+                "define i32 @readInt() #0 {\n" +
+                "  %1 = alloca i32, align 4\n" +
+                "  %2 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.strR, i32 0, i32 0), i32* %1)\n" +
+                "  %3 = load i32, i32* %1, align 4\n" +
+                "  ret i32 %3\n" +
+                "}\n" +
+                "\n" +
+                "declare i32 @scanf(i8*, ...) #1\n";
+    }
+
+    private String outputDefinition() {
+        return "@.strP = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\", align 1\n" +
+                "define void @println(i32 %x) #0 {\n" +
+                "  %1 = alloca i32, align 4\n" +
+                "  store i32 %x, i32* %1, align 4\n" +
+                "  %2 = load i32, i32* %1, align 4\n" +
+                "  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strP, i32 0, i32 0), i32 %2)\n" +
+                "  ret void\n" +
+                "}\n" +
+                "\n" +
+                "declare i32 @printf(i8*, ...) #1\n";
+    }
+
     private String program(ParseTree node) {
         // Program -> LET [ProgName] BE <Code> END
-        return line("@.str_in = private unnamed_addr constant [3 x i8] c\"%d\\00\"") +
-                line("@.str_out = private unnamed_addr constant [5 x i8] c\"%d\\n\\00\"") +
-                line("declare i32 @scanf(i8*, ...)") +
-                line("declare i32 @printf(i8*, ...)") +
-                line() +
-                generate(node.getChildren().get(0)) +
-                generate(node.getChildren().get(1)) +
-                generate(node.getChildren().get(2)) +
+        return line(inputDefinition()) +
+                line(outputDefinition()) +
+                look(node.getChildren().get(0)) +
+                look(node.getChildren().get(1)) +
+                look(node.getChildren().get(2)) +
                 line("entry:") +
-                line("%fmt_in = getelementptr inbounds [3 x i8], [3 x i8]* @.str_in, i32 0, i32 0") +
-                line("%fmt_out = getelementptr inbounds [4 x i8], [4 x i8]* @.str_out, i32 0, i32 0") +
-                line(generate(node.getChildren().get(3))) +
-                line(generate(node.getChildren().get(4)));
+                line(look(node.getChildren().get(3))) +
+                look(node.getChildren().get(4));
     }
 
     private String code(ParseTree node) {
         // Code -> <Instruction> : <Code> | epsilon
         if (node.getChildren().size() > 1) {
-            return line(generate(node.getChildren().getFirst())) +
-                    line(generate(node.getChildren().get(2)));
+            return line(look(node.getChildren().getFirst())) +
+                    line(look(node.getChildren().get(2)));
         }
         return "";
     }
 
     private String instruction(ParseTree node) {
         // Instruction -> <Assign> | <If> | <While> | <Output> | <Input>
-        return line(generate(node.getChildren().getFirst()));
+        return look(node.getChildren().getFirst());
     }
 
     private String assign(ParseTree node) {
-        // Assign -> VarName = <ExprArith>
-        String var = generate(node.getChildren().getFirst());
-        return line("%" + variableRegistration(var) + generate(node.getChildren().get(1)) + "alloca i32") +
-                line("store i32 " + generate(node.getChildren().get(2)) + ", i32* %" + var) +
-                line("%" + variableRegistration(var) + generate(node.getChildren().get(1)) + "load i32, i32* %" + var);
+        // Assign -> [VarName] = <ExprArith>
+        String varName = look(node.getChildren().get(0)); // VarName
+        String exprArith = look(node.getChildren().get(2)); // ExprArith
+
+        String varLLVM = variableRegistration(varName);
+        return line(varLLVM + " = alloca i32") +
+                exprArith +
+                line("store i32 " + getCurrentTempVar() + ", i32* " + varLLVM);
     }
 
     private String exprArith(ParseTree node) {
-        // ExprArith -> <Prod> <ExprArith'>
-        return generate(node.getChildren().get(0)) +
-                generate(node.getChildren().get(1));
+        // <ExprArith> -> <Prod> <ExprArith'>
+        String firstAtom = getFirst(node.getChildren().getFirst());
+        String exprArithPrimeFirst = getFirst(node.getChildren().get(1));
+        String operator = "";
+        String prod = look(node.getChildren().getFirst());
+        if (exprArithPrimeFirst.equals("add") || exprArithPrimeFirst.equals("sub")) {
+            operator = exprArithPrimeFirst;
+        }
+        if (operator.isEmpty()) {
+            return prod;
+        } else {
+            return operationLine(operator, firstAtom, look(node.getChildren().get(1)));
+        }
     }
 
     private String exprArithPrime(ParseTree node) {
-        // ExprArith' -> + <Prod> <ExprArith'> | - <Prod> <ExprArith'> | epsilon
+        // <ExprArith'> -> + <Prod> <ExprArith'> | - <Prod> <ExprArith'> | ε
         if (node.getChildren().size() == 3) {
-            return generate(node.getChildren().get(0)) +
-                    generate(node.getChildren().get(1)) +
-                    generate(node.getChildren().get(2));
-
+            String exprArithPrime = look(node.getChildren().get(2));
+            return exprArithPrime + line(look(node.getChildren().get(1)));
         }
         return "";
     }
 
     private String prod(ParseTree node) {
         // Prod -> <Atom> <Prod'>
-        return generate(node.getChildren().get(0)) +
-                generate(node.getChildren().get(1));
+        String prodPrimeFirst = getFirst(node.getChildren().get(1));
+        String prodPrime = look(node.getChildren().get(1));
+        String operator = "";
+        if (prodPrimeFirst.equals("mul") || prodPrimeFirst.equals("sdiv")) {
+            operator = prodPrimeFirst;
+        }
+        String atom = look(node.getChildren().getFirst());
+        if (operator.isEmpty()) {
+            return atom;
+        } else {
+            return operationLine(operator, atom, prodPrime);
+        }
     }
 
     private String prodPrime(ParseTree node) {
-        // Prod' -> * <Atom> <Prod'> | epsilon
+        // Prod' -> * <Atom> <Prod'> | / <Atom> <Prod'> | ε
         if (node.getChildren().size() == 3) {
-            return generate(node.getChildren().getFirst()) +
-                    generate(node.getChildren().get(1)) +
-                    generate(node.getChildren().get(2));
+            return look(node.getChildren().get(1));
         }
         return "";
     }
 
     private String atom(ParseTree node) {
-        // Atom -> [Number] | [VarName] | ( <ExprArith> )
+        // Atom -> [Number] | [VarName] | ( <ExprArith> ) | - <Atom>
         if (node.getChildren().size() == 1) {
-            return generate(node.getChildren().getFirst());
+            return look(node.getChildren().getFirst());
+        } else if (node.getChildren().size() == 3) {
+            return look(node.getChildren().get(1));
         } else {
-            return generate(node.getChildren().getFirst()) +
-                    generate(node.getChildren().get(1)) +
-                    generate(node.getChildren().get(2));
+            return look(node.getChildren().get(1));
         }
     }
 
+
     private String iF(ParseTree node) {
-        // If -> IF { <Cond> } THEN <Code> END
-//        String trueLabel = "label_" + labelCount++;
-//        String endLabel = "label_" + labelCount++;
-//
-//        generate(node.getChildren().get(2)); // generate <Cond>
-//        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(trueLabel).append(", label %").append(endLabel).append("\n");
-//
-//        finalOutput.append(trueLabel).append(":\n");
-//        generate(node.getChildren().get(5)); // generate <Code>
-//        finalOutput.append("br label %").append(endLabel).append("\n");
-//
-//        finalOutput.append(endLabel).append(":\n");
-        return "";
+        // If -> IF { <Cond> } THEN <Code> <IfTail>
+        ifCounter++;
+        String cond = "cond" + ifCounter;
+        String then = "then" + ifCounter;
+        String elsE = "else" + ifCounter;
+        String ifTail = look(node.getChildren().get(5));
+        return line("%" + cond + " = " + look(node.getChildren().get(2))) +
+                line("br i1 %" + cond + ", label %" + then + (ifTail.isEmpty() ? "" : ", label %" + elsE)) +
+                line(then + ":") +
+                line(ifTail) +
+                line(look(node.getChildren().get(6)));
     }
 
     private String ifTail(ParseTree node) {
+        // If -> END | ELSE <Code> END
+        String elsE = "else" + ifCounter;
+        if (node.getChildren().size() > 1) {
+            return line(elsE + ":") +
+                    line(look(node.getChildren().get(1)));
+        }
         return "";
     }
 
     private String cond(ParseTree node) {
-        return "";
+        // Cond → <SimpleCond> <Cond’>
+        return line(look(node.getChildren().getFirst()) + look(node.getChildren().get(1)));
     }
 
     private String condPrime(ParseTree node) {
+        // <Cond’> → -> <Cond> | epsilon
+        if (node.getChildren().size() == 2) {
+            return look(node.getChildren().getFirst()) + look(node.getChildren().get(1));
+        }
         return "";
     }
 
     private String simpleCond(ParseTree node) {
-        return "";
+        // <SimpleCond> -> \| <Cond> \| | <ExprArith> <Comp> <ExprArith>
+//TODO
+//        %i_val = load i32, i32* %i
+//        %cmp = icmp slt i32 %i_val, 10
+//        br i1 %cmp, label %body, label %end
+
+        if (node.getChildren().size() == 1) {
+            return look(node.getChildren().getFirst());
+        } else {
+            return look(node.getChildren().get(1)) +
+                    look(node.getChildren().getFirst()) +
+                    look(node.getChildren().get(2));
+        }
     }
 
     private String comp(ParseTree node) {
-        // While -> WHILE { <Cond> } REPEAT <Code> END
-//        String startLabel = "label_" + labelCount++;
-//        String bodyLabel = "label_" + labelCount++;
-//        String endLabel = "label_" + labelCount++;
-//
-//        finalOutput.append("br label %").append(startLabel).append("\n");
-//        finalOutput.append(startLabel).append(":\n");
-//
-//        generate(node.getChildren().get(2)); // generate <Cond>
-//        finalOutput.append("br i1 %").append(tempCount - 1).append(", label %").append(bodyLabel).append(", label %").append(endLabel).append("\n");
-//
-//        finalOutput.append(bodyLabel).append(":\n");
-//        generate(node.getChildren().get(5)); // generate <Code>
-//        finalOutput.append("br label %").append(startLabel).append("\n");
-//
-//        finalOutput.append(endLabel).append(":\n");
-        return "";
+        return look(node.getChildren().getFirst());
     }
 
     private String whilE(ParseTree node) {
-//        <While> → WHILE {<Cond>} REPEAT <Code> END
-        return line("while_cond:") +
-                line("while_body:") +
-                generate(node.getChildren().get(5)) +
-                line("while_end:");
+        //  <While> → WHILE {<Cond>} REPEAT <Code> END
+        whileCounter++;
+        return line("while_cond" + whileCounter + ":") +
+                look(node.getChildren().get(2)) +
+                line("while_body" + whileCounter + ":") +
+                look(node.getChildren().get(5));
     }
 
     private String output(ParseTree node) {
         // Output -> OUT([VarName])
-        String var = variableRegistration(generate(node.getChildren().get(2)));
-        return line("call i32 (i8*, ...) @printf(i8* %fmt_out, i32 %" + var + ")");
+        String var = variableRegistration(look(node.getChildren().get(2)));
+        return line("call void @println(i32 " + var + ")");
     }
 
     private String input(ParseTree node) {
         // <Input> → IN ( [VarName] )
-        String var = variableRegistration(generate(node.getChildren().get(2)) + "_input");
-        return line("%" + var + " = alloca i32") +
-                line("call i32 (i8*, ...) @scanf(i8* %fmt_in, i32* %" + var + ")") +
-                line("%" + variableRegistration(var) + generate(node.getChildren().get(1)) + " = load i32, i32* %" + var);
+        String var = variableRegistration(look(node.getChildren().get(2)));
+        return line(var + " = call i32 @readInt()") +
+                line(variableRegistration(var) + " = load i32, i32* %x");
+    }
+
+    private String getFirst(ParseTree node) {
+        return look(node.getChildren().getFirst());
+    }
+
+    private String getFollow(ParseTree node) {
+        return look(node.getChildren().getFirst());
+    }
+
+    private String operationLine(String operator, String atom1, String atom2) {
+        return line(operator + " i32 " + atom1 + ", " + atom2);
     }
 }
