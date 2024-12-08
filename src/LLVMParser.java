@@ -4,7 +4,7 @@ public class LLVMParser {
 
     private final Map<String, String> variables = new HashMap<>();
 
-    private int ifCounter, whileCounter, tempCounter;
+    private int ifCounter, whileCounter, tempCounter, condCounter;
 
     private String line() {
         return line("");
@@ -31,6 +31,15 @@ public class LLVMParser {
     private String getNewTempVar() {
         tempCounter++;
         return getCurrentTempVar();
+    }
+
+    private String getCurrentCondVar() {
+        return "%cond" + condCounter;
+    }
+
+    private String getNewCondVar() {
+        condCounter++;
+        return getCurrentCondVar();
     }
 
     public String generate(ParseTree parseTree) {
@@ -73,7 +82,7 @@ public class LLVMParser {
                 case "[Number]" -> token;
                 case "LET" -> "define i32 ";
                 case "BE" -> line(" {");
-                case "END" -> line("ret i32 0") + line("}");
+                case "END" -> "ret i32 0";
                 case "COLUMN" -> line();
                 case "OUT" -> "ret ";
                 case "+" -> "add";
@@ -81,10 +90,12 @@ public class LLVMParser {
                 case "*" -> "mul";
                 case "/" -> "sdiv";
                 case "=" -> " = ";
-                case "==" -> " icmp ";
+                case "==" -> "icmp eq";
                 case "<=" -> " icmp sle ";
                 case "<" -> " icmp slt ";
-                case "->" -> " and ";
+                case "->" -> "and ";
+                case "|" -> "|";
+                case "ELSE" -> "ELSE";
                 default -> "";
             };
         }
@@ -124,7 +135,8 @@ public class LLVMParser {
                 look(node.getChildren().get(2)) +
                 line("entry:") +
                 line(look(node.getChildren().get(3))) +
-                look(node.getChildren().get(4));
+                line(look(node.getChildren().get(4))) +
+                line("}");
     }
 
     private String code(ParseTree node) {
@@ -220,66 +232,82 @@ public class LLVMParser {
     private String iF(ParseTree node) {
         // If -> IF { <Cond> } THEN <Code> <IfTail>
         ifCounter++;
-        String cond = "cond" + ifCounter;
-        String then = "then" + ifCounter;
-        String elsE = "else" + ifCounter;
-        String ifTail = look(node.getChildren().get(5));
-        return line("%" + cond + " = " + look(node.getChildren().get(2))) +
-                line("br i1 %" + cond + ", label %" + then + (ifTail.isEmpty() ? "" : ", label %" + elsE)) +
-                line(then + ":") +
-                line(ifTail) +
-                line(look(node.getChildren().get(6)));
+        String ifBlockLabel = "if_block" + ifCounter;
+        String elseBlock = "else_block" + ifCounter;
+        String condition = look(node.getChildren().get(2));
+        String code = look(node.getChildren().get(5));
+        String ifTail = look(node.getChildren().get(6));
+
+        String elseLabel = "";
+        if (getFirst(node.getChildren().get(6)).equals("ELSE")) {
+            elseLabel = ", label %" + elseBlock;
+        }
+        return condition +
+                line("br i1 " + getCurrentCondVar() + ", label %" + ifBlockLabel + elseLabel) +
+                line(ifBlockLabel + ":") +
+                code +
+                line("br label %end" + ifCounter) +
+                ifTail;
     }
 
     private String ifTail(ParseTree node) {
         // If -> END | ELSE <Code> END
-        String elsE = "else" + ifCounter;
-        if (node.getChildren().size() > 1) {
-            return line(elsE + ":") +
-                    line(look(node.getChildren().get(1)));
+        if (node.getChildren().size() == 3) {
+            String elseLabel = line("else_block" + ifCounter + ":");
+            String code = look(node.getChildren().get(1));
+            String codeEnd = "end" + ifCounter + ":\n" + look(node.getChildren().get(2));
+            return elseLabel + code + line("br label %end" + ifCounter) + codeEnd;
+        } else {
+            return line("end" + ifCounter + ":");
         }
-        return "";
     }
 
     private String cond(ParseTree node) {
         // Cond → <SimpleCond> <Cond’>
-        return line(look(node.getChildren().getFirst()) + look(node.getChildren().get(1)));
+        String condPrimeFirst = getFirst(node.getChildren().get(1));
+        if (condPrimeFirst.equals("and ")) {
+            return condPrimeFirst + look(node.getChildren().get(1));
+        } else {
+            return line(look(node.getChildren().getFirst()));
+        }
     }
 
     private String condPrime(ParseTree node) {
         // <Cond’> → -> <Cond> | epsilon
         if (node.getChildren().size() == 2) {
-            return look(node.getChildren().getFirst()) + look(node.getChildren().get(1));
+            return look(node.getChildren().get(1));
         }
         return "";
     }
 
     private String simpleCond(ParseTree node) {
         // <SimpleCond> -> \| <Cond> \| | <ExprArith> <Comp> <ExprArith>
-//TODO
-//        %i_val = load i32, i32* %i
-//        %cmp = icmp slt i32 %i_val, 10
-//        br i1 %cmp, label %body, label %end
-
-        if (node.getChildren().size() == 1) {
-            return look(node.getChildren().getFirst());
+        if (look(node.getChildren().getFirst()).equals("|") && look(node.getChildren().get(2)).equals("|")) {
+            //  Return operator
+            return look(node.getChildren().get(1));
         } else {
-            return look(node.getChildren().get(1)) +
-                    look(node.getChildren().getFirst()) +
-                    look(node.getChildren().get(2));
+            //  Return comp
+            String comp = look(node.getChildren().get(1));
+            return line(getNewCondVar() + " = " + comp + " i32 " + look(node.getChildren().getFirst()) + ", " + look(node.getChildren().get(2)));
         }
     }
 
     private String comp(ParseTree node) {
+        // <Comp> -> == | <= | <
         return look(node.getChildren().getFirst());
     }
 
     private String whilE(ParseTree node) {
         //  <While> → WHILE {<Cond>} REPEAT <Code> END
         whileCounter++;
-        return line("while_cond" + whileCounter + ":") +
+        String whileLabel = "while" + whileCounter;
+        String whileCall = "br label %" + whileLabel;
+        String whileBody = "while_body" + whileCounter;
+        return line(whileCall) +
+                line() +
+                line(whileLabel.concat(":")) +
                 look(node.getChildren().get(2)) +
-                line("while_body" + whileCounter + ":") +
+                line(whileBody.concat(":")) +
                 look(node.getChildren().get(5));
     }
 
