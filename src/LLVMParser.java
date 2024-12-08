@@ -145,12 +145,15 @@ public class LLVMParser {
         // Assign -> [VarName] = <ExprArith>
         String varName = look(node.getChildren().get(0));
         String exprArith = look(node.getChildren().get(2));
-
         String varLLVM = variableRegistration(varName);
         return line(varLLVM + " = alloca i32, align 4") +
-                exprArith +
-                line("store i32 " + getCurrentTempVar() + ", i32* " + varLLVM + ", align 4") +
+                (isAtomic(exprArith) ? "" : exprArith) +
+                line("store i32 " + (isAtomic(exprArith) ? exprArith : getCurrentTempVar()) + ", i32* " + varLLVM + ", align 4") +
                 line(variableRegistration(varLLVM) + " = load i32, i32* " + varLLVM + ", align 4 ");
+    }
+
+    private boolean isAtomic(String value) {
+        return value.matches("-?\\d+");
     }
 
     private String exprArith(ParseTree node) {
@@ -209,7 +212,7 @@ public class LLVMParser {
         } else if (node.getChildren().size() == 3) {
             return look(node.getChildren().get(1));
         } else {
-            return look(node.getChildren().get(1));
+            return "-" + look(node.getChildren().get(1));
         }
     }
 
