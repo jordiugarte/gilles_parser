@@ -300,15 +300,21 @@ public class LLVMParser {
     private String whilE(ParseTree node) {
         //  <While> → WHILE {<Cond>} REPEAT <Code> END
         whileCounter++;
-        String whileLabel = "while" + whileCounter;
-        String whileCall = "br label %" + whileLabel;
-        String whileBody = "while_body" + whileCounter;
-        return line(whileCall) +
-                line() +
-                line(whileLabel.concat(":")) +
-                look(node.getChildren().get(2)) +
-                line(whileBody.concat(":")) +
-                look(node.getChildren().get(5));
+        String whileCondLabel = "while_cond" + whileCounter;
+        String whileBlockLabel = "while_block" + whileCounter;
+        String condition = look(node.getChildren().get(2));
+        String code = look(node.getChildren().get(5));
+        String endLabel = "while_end" + whileCounter;
+
+        return line("br label %" + whileCondLabel) +
+                line(whileCondLabel + ":") +
+                condition +
+                line("br i1 " + getCurrentCondVar() + ", label %" + whileBlockLabel + ", label %" + endLabel) +
+                line(whileBlockLabel + ":") +
+                code +
+                line("br label %" + whileCondLabel) +
+                line(endLabel + whileCounter + ":") +
+                line(look(node.getChildren().get(6)));
     }
 
     private String output(ParseTree node) {
