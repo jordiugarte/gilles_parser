@@ -1,8 +1,4 @@
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 /**
  *
@@ -36,7 +32,9 @@ public class Main{
         } else {
             boolean writeTree = false;
             boolean fullOutput = false;
+            boolean fullLLVMOutput = true;
             BufferedWriter bwTree = null;
+            BufferedWriter bwLlvm = null;
             FileWriter fwTree = null;
             FileReader codeSource = null;
             try {
@@ -65,9 +63,6 @@ public class Main{
             if (fullOutput) {parser.displayFullRules();}
             try {
                 parseTree = parser.parse();
-
-//                Test of the new parser TODO
-                System.out.println(new LLVMParser().generate(parseTree));
                 if (writeTree) {tex=parseTree.toLaTeX();};
             } catch (ParseException e) {
                 System.out.println("Error:> " + e.getMessage());
@@ -89,6 +84,38 @@ public class Main{
                         ex.printStackTrace();
                     }
                 }
+            }
+            String[] llvmResult;
+            try {
+                LLVMParser llvmParser = new LLVMParser();
+                llvmResult = llvmParser.generate(parseTree);
+                String code = llvmResult[1];
+                System.out.println(code);
+                if (fullLLVMOutput) {
+                    try {
+                        String fileName = llvmResult[0];
+                        System.out.println(code);
+                        try {
+                            File file = new File("./dist/" + fileName);
+                            bwLlvm = new BufferedWriter(new FileWriter(file));
+                            bwLlvm.write(code);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            try {
+                                if (bwLlvm != null) {
+                                    bwLlvm.close();
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Error:> " + e);
             }
         }
     }

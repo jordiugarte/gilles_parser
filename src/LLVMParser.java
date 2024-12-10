@@ -2,6 +2,8 @@ import java.util.*;
 
 public class LLVMParser {
 
+    private String programName = "";
+
     private final Map<String, String> variables = new HashMap<>();
 
     private int ifCounter, whileCounter, tempCounter, condCounter;
@@ -42,9 +44,9 @@ public class LLVMParser {
         return getCurrentCondVar();
     }
 
-    public String generate(ParseTree parseTree) {
+    public String[] generate(ParseTree parseTree) throws RuntimeException {
         String result = look(parseTree);
-        return result;
+        return new String[]{programName.concat(".ll"), result};
     }
 
     public String look(ParseTree node) {
@@ -77,7 +79,7 @@ public class LLVMParser {
             String terminal = expression.split("lexical unit: ")[1];
             String token = expression.split("lexical unit: ")[0].split("token: ")[1].replaceAll("\\s", "");
             return switch (terminal) {
-                case "[ProgName]" -> "@main()";
+                case "[ProgName]" -> setProgramName(token);
                 case "[VarName]" -> "%" + variableRegistration(token);
                 case "[Number]" -> token;
                 case "LET" -> "define i32 ";
@@ -124,6 +126,11 @@ public class LLVMParser {
                 "}\n" +
                 "\n" +
                 "declare i32 @printf(i8*, ...) #1\n";
+    }
+
+    private String setProgramName(String token) {
+        programName = token;
+        return "@main()";
     }
 
     private String program(ParseTree node) {
