@@ -22,13 +22,8 @@ declare i32 @printf(i8*, ...) #1
 define i32 @main() {
 entry:
 %x = alloca i32, align 4
-%tmp4 = add i32 %tmp1 = add i32 10, 5
-
-, mul i32 1, sdiv i32 5, 2
-
-
-
-store i32 %tmp4, i32* %x, align 4
+%prod1 = mul i32 5, 4
+store i32 %tmp0, i32* %x, align 4
 %x_val = load i32, i32* %x, align 4 
 
 call void @println(i32 %x_val)

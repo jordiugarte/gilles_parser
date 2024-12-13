@@ -115,7 +115,8 @@ public class Main{
                     }
                 }
             } catch (RuntimeException e) {
-                System.out.println("Error:> " + e);
+                e.printStackTrace();
+                System.out.println("Error:> " + e.getMessage());
             }
         }
     }
