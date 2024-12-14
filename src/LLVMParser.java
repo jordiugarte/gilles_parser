@@ -6,7 +6,7 @@ public class LLVMParser {
 
     private final Map<String, String> variables = new HashMap<>();
 
-    private int ifCounter, whileCounter, tempCounter, condCounter, prodCounter;
+    private int ifCounter, whileCounter, arithCounter, condCounter, prodCounter;
 
     private String line() {
         return line("");
@@ -29,17 +29,22 @@ public class LLVMParser {
         }
     }
 
-    private String getCurrentTempVar() {
-        return "%tmp" + tempCounter;
+    private String getCurrentProdVar() {
+        return "%prod" + prodCounter;
     }
 
-    private String getNewTempVar() {
-        tempCounter++;
-        return getCurrentTempVar();
+    private String getNewProdVar() {
+        prodCounter++;
+        return getCurrentProdVar();
     }
 
-    private String getPreviousTempVar() {
-        return "%tmp" + (tempCounter - 1);
+    private String getCurrentArithVar() {
+        return "%arith" + arithCounter;
+    }
+
+    private String getNewArithVar() {
+        arithCounter++;
+        return getCurrentArithVar();
     }
 
     private String getCurrentCondVar() {
@@ -49,15 +54,6 @@ public class LLVMParser {
     private String getNewCondVar() {
         condCounter++;
         return getCurrentCondVar();
-    }
-
-    private String getNewProd() {
-        prodCounter++;
-        return getCurrentProd();
-    }
-
-    private String getCurrentProd() {
-        return "%prod" + prodCounter;
     }
 
     public String[] generate(ParseTree parseTree) throws RuntimeException {
@@ -182,40 +178,42 @@ public class LLVMParser {
         String exprArith = look(node.getChildren().get(2));
         String varLLVM = variableRegistration(varName);
         return line(varLLVM + " = alloca i32, align 4") +
-                (isNumericAtomic(exprArith) ? "" : exprArith) +
-                line("store i32 " + (isNumericAtomic(exprArith) ? exprArith : getCurrentTempVar()) + ", i32* " + varLLVM + ", align 4") +
+                exprArith +
+                line("store i32 " + getCurrentArithVar() + ", i32* " + varLLVM + ", align 4") +
                 line(variableRegistration(varLLVM) + " = load i32, i32* " + varLLVM + ", align 4 ");
-    }
-
-    private boolean isNumericAtomic(String value) {
-        return value.matches("-?\\d+");
     }
 
     private String exprArith(ParseTree node) {
         // <ExprArith> -> <Prod> <ExprArith'>
         String prod = look(node.getChildren().getFirst());
+        prodQueue.addFirst(getCurrentProdVar());
         String exprArithPrime = look(node.getChildren().get(1));
-        return prod + exprArithPrime;
+        String currentArithVar = getCurrentArithVar();
+        return prod + exprArithPrime + line(getNewArithVar() + " = add i32 0, " + (exprArithPrime.isEmpty() ? prodQueue.removeFirst() : currentArithVar));
     }
 
     private String exprArithPrime(ParseTree node) {
         // <ExprArith'> -> + <Prod> <ExprArith'> | - <Prod> <ExprArith'> | ε
         if (node.getChildren().size() == 3) {
-//            String prodBackground = look(node.getChildren().getFirst());
-//            String exprArithPrimeBackground = look(node.getChildren().get(1));
-//            if (exprArithPrimeBackground.isEmpty()) {
-//                return prodBackground;
-//            } else {
-//                String operator = getFirst(node.getChildren().get(1));
-//                if (isNumericAtomic(prodBackground)) {
-//                    return exprArithPrimeBackground +
-//                            line(getNewTempVar() + " = " + operator + " i32 " + prodBackground + ", " + getCurrentTempVar());
-//                } else {
-//                    return prodBackground +
-//                            exprArithPrimeBackground +
-//                            line(getNewTempVar() + " = " + operator + " i32 " + prodBackground + ", " + getCurrentTempVar());
-//                }
-//            }
+            String operator = look(node.getChildren().getFirst());
+            String prod = look(node.getChildren().get(1));
+            prodQueue.addFirst(getCurrentProdVar());
+            if (prodQueue.size() == 2) {
+                System.out.println("two" + prodQueue.size());
+                // Check if atomic queue has at least a pair ov atoms
+                String rightAtom = prodQueue.removeFirst();
+                String leftAtom = prodQueue.removeFirst();
+                return prod + line(getNewArithVar() + " = " + operator + " i32 " + leftAtom + ", " + rightAtom) +
+                        exprArithPrime(node.getChildren().get(2));
+            } else if (prodQueue.size() == 1) {
+                System.out.println("one");
+                // Check if atomic queue has at least one atom
+                String currentExprArithVar = getCurrentArithVar();
+                return prod + line(getNewArithVar() + " = " + operator + " i32 " + currentExprArithVar + ", " + prodQueue.removeFirst()) +
+                        exprArithPrime(node.getChildren().get(2));
+            } else {
+                return "";
+            }
         }
         return "";
     }
@@ -224,7 +222,9 @@ public class LLVMParser {
         // Prod -> <Atom> <Prod'>
         String atom = look(node.getChildren().getFirst());
         atomicQueue.add(atom);
-        return look(node.getChildren().get(1));
+        String prod = look(node.getChildren().get(1));
+        String currentProdVar = getCurrentProdVar();
+        return prod + line(getNewProdVar() + " = add i32 0, " + (prod.isEmpty() ? atomicQueue.removeFirst() : currentProdVar));
     }
 
     // Recursive
@@ -238,12 +238,12 @@ public class LLVMParser {
                 // Check if atomic queue has at least a pair ov atoms
                 String leftAtom = atomicQueue.removeFirst();
                 String rightAtom = atomicQueue.removeFirst();
-                return line(getNewProd() + " = " + operator + " i32 " + leftAtom + ", " + rightAtom) +
+                return line(getNewProdVar() + " = " + operator + " i32 " + leftAtom + ", " + rightAtom) +
                         prodPrime(node.getChildren().get(2));
             } else if (atomicQueue.size() == 1) {
                 // Check if atomic queue has at least one atom
-                String currentProd = getCurrentProd();
-                return line(getNewProd() + " = " + operator + " i32 " + currentProd + ", " + atom) +
+                String currentProd = getCurrentProdVar();
+                return line(getNewProdVar() + " = " + operator + " i32 " + currentProd + ", " + atomicQueue.removeFirst()) +
                         prodPrime(node.getChildren().get(2));
             } else {
                 return "";
@@ -366,10 +366,6 @@ public class LLVMParser {
     }
 
     private String getFirst(ParseTree node) {
-        return getFurther(node, 0);
-    }
-
-    private String getFurther(ParseTree node, int k) {
-        return look(node.getChildren().get(k));
+        return look(node.getChildren().getFirst());
     }
 }
