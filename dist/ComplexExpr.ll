@@ -25,7 +25,13 @@ entry:
 %prod1 = mul i32 3, 2
 %prod2 = add i32 0, %prod1
 %arith1 = add i32 0, %prod2
-store i32 %arith1, i32* %x, align 4
+%prod3 = add i32 0, %arith1
+%prod4 = add i32 0, 1
+%arith2 = add i32 %prod3, %prod4
+%arith3 = add i32 0, %arith2
+%prod5 = add i32 0, %arith3
+%arith4 = add i32 0, %prod5
+store i32 %arith4, i32* %x, align 4
 %x_val = load i32, i32* %x, align 4 
 
 call void @println(i32 %x_val)

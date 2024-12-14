@@ -218,11 +218,18 @@ public class LLVMParser {
 
     private String prod(ParseTree node) {
         // Prod -> <Atom> <Prod'>
-        String atom = look(node.getChildren().getFirst());
-        atomicQueue.add(atom);
+        String possibleAtomicExprArith = "";
+        String atomReference = "";
+        if (isArithmeticAtom(node.getChildren().getFirst())) {
+            possibleAtomicExprArith = look(node.getChildren().getFirst().getChildren().get(1));
+            atomReference = getCurrentArithVar();
+        } else {
+            atomReference = look(node.getChildren().getFirst());
+        }
+        atomicQueue.add(atomReference);
         String prod = look(node.getChildren().get(1));
         String currentProdVar = getCurrentProdVar();
-        return prod + line(getNewProdVar() + " = add i32 0, " + (prod.isEmpty() ? atomicQueue.removeFirst() : currentProdVar));
+        return possibleAtomicExprArith + prod + line(getNewProdVar() + " = add i32 0, " + (prod.isEmpty() ? atomicQueue.removeFirst() : currentProdVar));
     }
 
     // Recursive
@@ -250,8 +257,8 @@ public class LLVMParser {
         return "";
     }
 
-    private boolean isAtomArithmetic(ParseTree atom) {
-        return getFirst(atom).equals("(") && getLast(atom).equals(")");
+    private boolean isArithmeticAtom(ParseTree atom) {
+        return atom.getChildren().size() == 3;
     }
 
     private String atom(ParseTree node) {
