@@ -1,4 +1,4 @@
 LET ComplexExpr BE
-  x = (3 * 2): $ Complex mixed expression
+  x = 3 * 2: $ Complex mixed expression
   OUT(x):
 END

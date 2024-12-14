@@ -199,14 +199,12 @@ public class LLVMParser {
             String prod = look(node.getChildren().get(1));
             prodQueue.addFirst(getCurrentProdVar());
             if (prodQueue.size() == 2) {
-                System.out.println("two" + prodQueue.size());
                 // Check if atomic queue has at least a pair ov atoms
                 String rightAtom = prodQueue.removeFirst();
                 String leftAtom = prodQueue.removeFirst();
                 return prod + line(getNewArithVar() + " = " + operator + " i32 " + leftAtom + ", " + rightAtom) +
                         exprArithPrime(node.getChildren().get(2));
             } else if (prodQueue.size() == 1) {
-                System.out.println("one");
                 // Check if atomic queue has at least one atom
                 String currentExprArithVar = getCurrentArithVar();
                 return prod + line(getNewArithVar() + " = " + operator + " i32 " + currentExprArithVar + ", " + prodQueue.removeFirst()) +
@@ -250,6 +248,10 @@ public class LLVMParser {
             }
         }
         return "";
+    }
+
+    private boolean isAtomArithmetic(ParseTree atom) {
+        return getFirst(atom).equals("(") && getLast(atom).equals(")");
     }
 
     private String atom(ParseTree node) {
@@ -367,5 +369,9 @@ public class LLVMParser {
 
     private String getFirst(ParseTree node) {
         return look(node.getChildren().getFirst());
+    }
+
+    private String getLast(ParseTree node) {
+        return look(node.getChildren().getLast());
     }
 }
