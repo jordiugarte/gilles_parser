@@ -1,5 +1,8 @@
 *.class
 *.java~
+*.ll
+*.ll
+*.bc
 src/LexicalAnalyzer.java
 
 # IntelliJ IDEA

@@ -1,0 +1,6 @@
+LET Custom BE
+  x = 10 + 5 * 2 / 2 - 3 + 8 * 2:
+  IF {x == 28 -> x <= 28 -> x < 29} THEN
+    OUT(x):
+  END:
+END

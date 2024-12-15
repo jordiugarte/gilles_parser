@@ -94,9 +94,8 @@ public class Main{
                 if (fullLLVMOutput) {
                     try {
                         String fileName = llvmResult[0];
-                        System.out.println(code);
                         try {
-                            File file = new File("./dist/" + fileName);
+                            File file = new File("./dist/llvm_generated/" + fileName);
                             bwLlvm = new BufferedWriter(new FileWriter(file));
                             bwLlvm.write(code);
                         } catch (IOException e) {
