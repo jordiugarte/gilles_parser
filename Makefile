@@ -49,6 +49,12 @@ test:
 	@#@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf)
 	@#$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf")
 
+run-llvm: test
+	@# Extract the base name of the test file (without directory and extension)
+	@BASENAME=$(basename $(notdir ${TEST_FILE})); \
+	echo "Running LLVM assembly for $$BASENAME.ll..."; \
+	llvm-as ${DIST_DIR}/llvm_generated/$$BASENAME.ll -o=${DIST_DIR}/llvm_generated/$$BASENAME.bc && \
+	lli ${DIST_DIR}/llvm_generated/$$BASENAME.bc
 clean:
 	# Remove all .class and auto-generated files
 	rm -f ${SRC_DIR}/*.class
