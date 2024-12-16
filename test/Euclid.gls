@@ -1,6 +1,6 @@
 !! Euclid's algorithm !!
 
-LET Euclidean_algorithm BE
+LET Euclid BE
   IN(a):
   IN(b):
   WHILE {0 < b} REPEAT
