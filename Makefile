@@ -17,7 +17,7 @@ MAIN_CLASS = ${SRC_DIR}/Main  # Update this if your main class is different
 JAR_NAME = $(DIST_DIR)/part3.jar
 
 TEST_DIR = ${PWD}/test
-TEST_FILE ?= ${TEST_DIR}/Custom.gls
+TEST_FILE ?= ${TEST_DIR}/Sum.gls
 
 #OUTPUT_TEX_FILE ?= ${MORE_DIR}/parseTreeOutput.tex
 OUTPUT_TEX_FILENAME = parseTreeOutput.tex
