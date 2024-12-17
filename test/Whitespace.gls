@@ -1,4 +1,4 @@
-LET ComplexExpr BE
+LET Whitespace BE
   x       =              (10 +                      5)
    * (2 -                  3) / 4 + (
    1 * (                                                       5 / 2)
