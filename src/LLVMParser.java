@@ -11,6 +11,7 @@ public class LLVMParser {
     private List<String> atomicQueue = new ArrayList<>();
     private List<String> prodQueue = new ArrayList<>();
     private List<String> conditionQueue = new ArrayList<>();
+    private List<String> endQueue = new ArrayList<>();
 
     private String line() {
         return line("");
@@ -56,6 +57,10 @@ public class LLVMParser {
         return "%".concat(varName) + "_val" + variables.get(varName);
     }
 
+    private String getProgramEnd() {
+        return endQueue.removeFirst();
+    }
+
     public String[] generate(ParseTree parseTree) throws RuntimeException {
         String result = look(parseTree);
         return new String[]{programName.concat(".ll"), result};
@@ -96,7 +101,7 @@ public class LLVMParser {
                 case "[Number]" -> token;
                 case "LET" -> "define i32 ";
                 case "BE" -> line(" {");
-                case "END" -> "ret i32 0";
+                case "END" -> getProgramEnd();
                 case "COLUMN" -> line();
                 case "OUT" -> "ret ";
                 case "+" -> "add";
@@ -156,6 +161,7 @@ public class LLVMParser {
 
     private String program(ParseTree node) {
         // Program -> LET [ProgName] BE <Code> END
+        endQueue.addFirst("ret i32 0");
         return line(logicalImplication()) +
                 line(inputDefinition()) +
                 line(outputDefinition()) +
@@ -324,7 +330,6 @@ public class LLVMParser {
         String conditionVar = getCurrentCondVar();
         String code = look(node.getChildren().get(5));
         String ifTail = look(node.getChildren().get(6));
-
         String elseLabel = ", label %" + elseBlock;
         return condition +
                 line("br i1 " + conditionVar + ", label %" + ifBlockLabel + elseLabel) +
@@ -339,12 +344,16 @@ public class LLVMParser {
         if (node.getChildren().size() == 3) {
             String elseLabel = line("else_block" + ifCounter + ":");
             String code = look(node.getChildren().get(1));
-            String codeEnd = "end" + ifCounter + ":\n" + look(node.getChildren().get(2));
-            return elseLabel + code + line("br label %end" + ifCounter) + codeEnd;
+            String codeEnd = "end" + ifCounter;
+            endQueue.addFirst(codeEnd);
+            return elseLabel + code + line("br label %end" + ifCounter) +
+                    look(node.getChildren().get(2)) + ":";
         } else {
+            String codeEnd = "end" + ifCounter;
+            endQueue.addFirst(codeEnd);
             return line("else_block" + ifCounter + ":") +
-                    line("br label %end" + ifCounter) +
-                    "end" + ifCounter + ":\n" + look(node.getChildren().getFirst());
+                    line("br label %" + codeEnd) +
+                    look(node.getChildren().getFirst()) + ":";
         }
     }
 
@@ -409,6 +418,7 @@ public class LLVMParser {
         String whileCondLabel = "while_cond" + whileCounter;
         String whileBlockLabel = "while_block" + whileCounter;
         String endLabel = "while_end" + whileCounter;
+        endQueue.addFirst(endLabel);
         String condition = look(node.getChildren().get(2));
         String updatedVars = updateVars();
         String currentCondVar = getCurrentCondVar();
@@ -425,8 +435,7 @@ public class LLVMParser {
                 code +
                 line("br label %" + whileCondLabel) +
                 line() +
-                line(endLabel + ":") +
-                line(look(node.getChildren().get(6)));
+                line(look(node.getChildren().get(6)) + ":");
     }
 
     private String output(ParseTree node) {
