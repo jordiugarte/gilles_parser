@@ -125,6 +125,7 @@ public class LLVMParser {
             };
         }
     }
+
     public void assignAllVariablesFirst(ParseTree node) {
         if (node.getChildren().isEmpty()) {
             String expression = node.getLabel().toString();
@@ -182,6 +183,12 @@ public class LLVMParser {
         // Program -> LET [ProgName] BE <Code> END
         assignAllVariablesFirst(node);
         endQueue.addFirst("ret i32 0");
+        String variablesAssignation = "";
+        for (String var : variableSet) {
+            addVariable(var);
+            String allocation = line("%" + var + " = alloca i32, align 4");
+            variablesAssignation = variablesAssignation.concat(allocation);
+        }
         return line(logicalImplication()) +
                 line(inputDefinition()) +
                 line(outputDefinition()) +
@@ -189,7 +196,7 @@ public class LLVMParser {
                 look(node.getChildren().get(1)) +
                 look(node.getChildren().get(2)) +
                 line("entry:") +
-
+                variablesAssignation +
                 look(node.getChildren().get(3)) +
                 look(node.getChildren().get(4)) +
                 line() +
@@ -216,10 +223,12 @@ public class LLVMParser {
 
     private String updateVars() {
         StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(line("; Updated variables references"));
         variables.forEach((value, index) -> {
             updateVariableCounter(value);
             stringBuilder.append(varNameLoadCall(value));
         });
+        stringBuilder.append(line());
         return stringBuilder.toString();
     }
 
@@ -229,16 +238,9 @@ public class LLVMParser {
         String exprArith = look(node.getChildren().get(2));
         String currentArithVar = getCurrentArithVar();
         String filteredVariable = varName.substring(1);
-        if (!variables.containsKey(filteredVariable)) {
-            addVariable(filteredVariable);
-            String allocation = line(varName + " = alloca i32, align 4");
-            String assign = line("store i32 " + currentArithVar + ", i32* " + varName + ", align 4");
-            return exprArith + allocation + assign + varNameLoadCall(filteredVariable);
-        } else {
-            String reAssign = line("store i32 " + currentArithVar + ", i32* " + varName + ", align 4");
-            updateVariableCounter(filteredVariable);
-            return exprArith + reAssign + varNameLoadCall(filteredVariable);
-        }
+        String reAssign = line("store i32 " + currentArithVar + ", i32* " + varName + ", align 4");
+        updateVariableCounter(filteredVariable);
+        return exprArith + reAssign + varNameLoadCall(filteredVariable);
     }
 
     private String exprArith(ParseTree node) {
@@ -353,7 +355,7 @@ public class LLVMParser {
         String code = look(node.getChildren().get(5));
         String ifTail = look(node.getChildren().get(6));
         String elseLabel = ", label %" + elseBlock;
-        return updateVars() + condition +
+        return condition +
                 line("br i1 " + conditionVar + ", label %" + ifBlockLabel + elseLabel) +
                 line(ifBlockLabel + ":") +
                 code +
@@ -381,9 +383,10 @@ public class LLVMParser {
 
     private String cond(ParseTree node) {
         // Cond → <SimpleCond> <Cond’>
+        String updatedVars = updateVars();
         String simpleCond = look(node.getChildren().getFirst());
         String condPrime = look(node.getChildren().get(1));
-        return simpleCond + condPrime;
+        return updatedVars + simpleCond + condPrime;
     }
 
     private String condPrime(ParseTree node) {
@@ -459,8 +462,9 @@ public class LLVMParser {
 
     private String output(ParseTree node) {
         // Output -> OUT([VarName])
+        String updatedVars = updateVars();
         String varName = look(node.getChildren().get(2));
-        return line("call void @println(i32 " + getCurrentVariableVal(varName.substring(1)) + ")");
+        return updatedVars + line("call void @println(i32 " + getCurrentVariableVal(varName.substring(1)) + ")");
     }
 
     private String input(ParseTree node) {
@@ -468,9 +472,8 @@ public class LLVMParser {
         String varName = look(node.getChildren().get(2));
         String tempInputVar = varName + "_input";
         String filteredVariable = varName.substring(1);
-        variables.put(filteredVariable, 1);
+        updateVariableCounter(filteredVariable);
         return line(tempInputVar + " = call i32 @readInt()") +
-                line(varName + " = alloca i32, align 4") +
                 line("store i32 " + tempInputVar + ", i32* " + varName + ", align 4") +
                 varNameLoadCall(filteredVariable);
     }

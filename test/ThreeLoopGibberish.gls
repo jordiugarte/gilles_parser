@@ -1,6 +1,6 @@
 !! Random GIGO with ELSE as a VarName !!
 
-LET Random_Gigo BE
+LET ThreeLoopGibberish BE
   IN(a):
   IN(b):
   IN(c):
