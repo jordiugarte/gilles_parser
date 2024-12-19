@@ -1,13 +1,8 @@
 import java.io.*;
 
 /**
- *
- * Project Part 2: Parser
- *
- * @author Marie Van Den Bogaard, Léo Exibard, Gilles Geeraerts, Sarah Winter, edited by Mrudula Balachander
- *
+ * Project Part 3: Parser
  */
-
 public class Main{
     /**
      *
@@ -21,10 +16,7 @@ public class Main{
     public static void main(String[] args) throws FileNotFoundException, IOException, SecurityException, Exception{
         // Display the usage when no arguments are given
         if(args.length == 0){
-            System.out.println("Usage:  java -jar part2.jar [OPTION] [FILE]\n"
-                               + "\tOPTION:\n"
-                               + "\t -wt (write-tree) filename.tex: writes latex tree to filename.tex\n"
-                               + "\t -dr (display-rules): writes each rule in full\n"
+            System.out.println("Usage:  java -jar part3.jar [FILE]\n"
                                + "\tFILE:\n"
                                + "\tA .gls file containing a GILLES program\n"
                                );

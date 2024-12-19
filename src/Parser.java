@@ -80,13 +80,16 @@ public class Parser{
     
     /**
      * Outputs the rule used in the LL descent, using the fullRuleDisplay value to set the option of full display or not.
+     *
+     * Made a no-op for part 3 since we don't want to display the rules!
      * 
      * @param rNum the rule number.
      * @param ruleLhs the left hand-side of the rule as a String.
      * @param ruleRhs the right hand-side of the rule as a String.
      */
     private void ruleOutput(int rNum, String ruleLhs,String ruleRhs) {
-        ruleOutput(rNum,ruleLhs,ruleRhs,this.fullRuleDisplay);
+        // ruleOutput(rNum,ruleLhs,ruleRhs,this.fullRuleDisplay);
+        // Noop for now since we don't want to display the rules!
     }
     
     /**

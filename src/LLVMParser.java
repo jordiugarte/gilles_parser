@@ -1,5 +1,8 @@
 import java.util.*;
 
+/**
+ * This class is responsible for generating the LLVM code from the parse tree.
+ */
 public class LLVMParser {
 
     private String programName = "";
@@ -14,64 +17,128 @@ public class LLVMParser {
     private final List<String> conditionQueue = new ArrayList<>();
     private final List<String> endQueue = new ArrayList<>();
 
-
+    /**
+     * Generates a new line in the LLVM code.
+     * @return String
+     */
     private String line() {
         return line("");
     }
 
+    /**
+     * Generates a new line in the LLVM code with the given input.
+     * @param input The input to generate the new line.
+     * @return String
+     */
     private String line(String input) {
         return input.concat("\n");
     }
 
+    /**
+     * Returns the current production variable.
+     * @return String
+     */
     private String getCurrentProdVar() {
         return "%prod" + prodCounter;
     }
 
+    /**
+     * Returns a new production variable.
+     * @return String
+     */
     private String getNewProdVar() {
         prodCounter++;
         return getCurrentProdVar();
     }
 
+    /**
+     * Returns the current arithmetic variable.
+     * @return String
+     */
     private String getCurrentArithVar() {
         return "%arith" + arithCounter;
     }
 
+    /**
+     * Returns a new arithmetic variable.
+     * @return String
+     */
     private String getNewArithVar() {
         arithCounter++;
         return getCurrentArithVar();
     }
 
+    /**
+     * Returns the current condition variable.
+     * @return String
+     */
     private String getCurrentCondVar() {
         return "%cond" + condCounter;
     }
 
+    /**
+     * Returns a new condition variable.
+     * @return String
+     */
     private String getNewCondVar() {
         condCounter++;
         return getCurrentCondVar();
     }
 
+    /**
+     * Updates the variable counter.
+     * @param varName The variable name to update.
+     */
     private void updateVariableCounter(String varName) {
         int index = variables.get(varName) + 1;
         variables.put(varName, index);
     }
 
+    /**
+     * Adds a new variable to the variables map.
+     * @param filteredVariable The variable to add.
+     */
     private void addVariable(String filteredVariable) {
         variables.put(filteredVariable, 1);
     }
 
+    /**
+     * Returns the current variable value with the given variable name in LLVM format.
+     * @param varName The variable name to get the value from.
+     * @return String
+     */
     private String getCurrentVariableVal(String varName) {
         return "%".concat(varName) + "_val" + variables.get(varName);
     }
 
+    /**
+     * Returns the program end.
+     * @return String
+     */
     private String getProgramEnd() {
         return endQueue.removeFirst();
     }
 
+    /**
+     * Generates LLVM code from the provided parse tree.
+     *
+     * @param parseTree The parse tree to generate the LLVM code from.
+     * @return An array containing the name of the program and the generated LLVM code.
+     * @throws RuntimeException If an unknown non-terminal expression is found.
+     */
     public String[] generate(ParseTree parseTree) throws RuntimeException {
         String result = look(parseTree);
         return new String[]{programName.concat(".ll"), result};
     }
 
+    /**
+     * Processes the given parse tree node and returns its corresponding LLVM code.
+     * This method is recursive.
+     *
+     * @param node The parse tree node to process.
+     * @return The LLVM code corresponding to the given parse tree node.
+     * @throws RuntimeException If an unknown non-terminal expression is found.
+     */
     public String look(ParseTree node) {
         String expression = node.getLabel().toString();
         if (expression.startsWith("Non-terminal symbol: ")) {
@@ -126,6 +193,12 @@ public class LLVMParser {
         }
     }
 
+    /**
+     * Assigns all variables in the given parse tree to initialize them
+     * before generating the LLVM code.
+     *
+     * @param node The parse tree node to assign the variables from.
+     */
     public void assignAllVariablesFirst(ParseTree node) {
         if (node.getChildren().isEmpty()) {
             String expression = node.getLabel().toString();
@@ -140,6 +213,11 @@ public class LLVMParser {
         }
     }
 
+    /**
+     * Creates the LLVM code for logical implication between two boolean values.
+     *
+     * @return The LLVM code for logical implication.
+     */
     private String logicalImplication() {
         return "define i1 @logical_implication(i1 %p, i1 %q) {\n" +
                 "entry:\n" +
@@ -149,6 +227,11 @@ public class LLVMParser {
                 "}\n";
     }
 
+    /**
+     * Defines the LLVM code for reading an integer input.
+     *
+     * @return The LLVM code for reading an integer input.
+     */
     private String inputDefinition() {
         return "@.strR = private unnamed_addr constant [3 x i8] c\"%d\\00\", align 1\n" +
                 "define i32 @readInt() #0 {\n" +
@@ -161,6 +244,11 @@ public class LLVMParser {
                 "declare i32 @scanf(i8*, ...) #1\n";
     }
 
+    /**
+     * Defines the LLVM code for printing an integer output.
+     *
+     * @return The LLVM code for printing an integer output.
+     */
     private String outputDefinition() {
         return "@.strP = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\", align 1\n" +
                 "define void @println(i32 %x) #0 {\n" +
@@ -174,11 +262,21 @@ public class LLVMParser {
                 "declare i32 @printf(i8*, ...) #1\n";
     }
 
+    /**
+     * Sets the program name to the given token.
+     * @param token The token to set the program name to.
+     * @return String indicating the start of the program.
+     */
     private String setProgramName(String token) {
         programName = token;
         return "@main()";
     }
 
+    /**
+     * Generates the LLVM code for the Program non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Program non-terminal expression.
+     */
     private String program(ParseTree node) {
         // Program -> LET [ProgName] BE <Code> END
         assignAllVariablesFirst(node);
@@ -203,6 +301,11 @@ public class LLVMParser {
                 line("}");
     }
 
+    /**
+     * Generates the LLVM code for the Code non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Code non-terminal expression.
+     */
     private String code(ParseTree node) {
         // Code -> <Instruction> : <Code> | epsilon
         if (node.getChildren().size() == 3) {
@@ -212,15 +315,29 @@ public class LLVMParser {
         return "";
     }
 
+    /**
+     * Generates the LLVM code for the Instruction non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Instruction non-terminal expression.
+     */
     private String instruction(ParseTree node) {
         // Instruction -> <Assign> | <If> | <While> | <Output> | <Input>
         return look(node.getChildren().getFirst());
     }
 
+    /**
+     * Generates the LLVM code for the Assign non-terminal expression.
+     * @param varName The variable name to assign the value to.
+     * @return The LLVM code for the Assign non-terminal expression.
+     */
     private String varNameLoadCall(String varName) {
         return line("%" + varName + "_val" + variables.get(varName) + " = load i32, i32* %" + varName + ", align 4");
     }
 
+    /**
+     * Updates the variables references in the LLVM code.
+     * @return The updated variables references in the LLVM code.
+     */
     private String updateVars() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(line("; Updated variables references"));
@@ -232,6 +349,11 @@ public class LLVMParser {
         return stringBuilder.toString();
     }
 
+    /**
+     * Generates the LLVM code for the Assign non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Assign non-terminal expression.
+     */
     private String assign(ParseTree node) {
         // Assign -> [VarName] = <ExprArith>
         String varName = look(node.getChildren().get(0));
@@ -243,6 +365,11 @@ public class LLVMParser {
         return exprArith + reAssign + varNameLoadCall(filteredVariable);
     }
 
+    /**
+     * Generates the LLVM code for the ExprArith non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the ExprArith non-terminal expression.
+     */
     private String exprArith(ParseTree node) {
         // <ExprArith> -> <Prod> <ExprArith'>
         String prod = look(node.getChildren().getFirst());
@@ -252,6 +379,12 @@ public class LLVMParser {
         return prod + exprArithPrime + line(getNewArithVar() + " = add i32 0, " + (exprArithPrime.isEmpty() ? prodQueue.removeFirst() : currentArithVar));
     }
 
+    /**
+     * Generates the LLVM code for the ExprArith' non-terminal expression.
+     *
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the ExprArith' non-terminal expression.
+     */
     private String exprArithPrime(ParseTree node) {
         // <ExprArith'> -> + <Prod> <ExprArith'> | - <Prod> <ExprArith'> | ε
         if (node.getChildren().size() == 3) {
@@ -276,6 +409,12 @@ public class LLVMParser {
         return "";
     }
 
+    /**
+     * Generates the LLVM code for the Prod non-terminal expression.
+     *
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Prod non-terminal expression.
+     */
     private String prod(ParseTree node) {
         // Prod -> <Atom> <Prod'>
         String possibleAtomicExprArith = "";
@@ -292,7 +431,11 @@ public class LLVMParser {
         return possibleAtomicExprArith + prod + line(getNewProdVar() + " = add i32 0, " + (prod.isEmpty() ? atomicQueue.removeFirst() : currentProdVar));
     }
 
-    // Recursive
+    /**
+     * Generates the LLVM code for the Prod' non-terminal expression in a recursive manner.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Prod' non-terminal expression.
+     */
     private String prodPrime(ParseTree node) {
         // Prod' -> * <Atom> <Prod'> | / <Atom> <Prod'> | ε
         if (node.getChildren().size() == 3) {
@@ -324,10 +467,20 @@ public class LLVMParser {
         return "";
     }
 
+    /**
+     * Checks if the given parse tree node is an arithmetic atom.
+     * @param atom The parse tree node to check.
+     * @return True if the given parse tree node is an arithmetic atom, false otherwise.
+     */
     private boolean isArithmeticAtom(ParseTree atom) {
         return atom.getChildren().size() == 3;
     }
 
+    /**
+     * Returns the value of the given arithmetic atom.
+     * @param node The parse tree node to get the value from.
+     * @return The value of the given arithmetic atom.
+     */
     private String atom(ParseTree node) {
         // Atom -> [Number] | [VarName] | ( <ExprArith> ) | - <Atom>
         if (node.getChildren().size() == 1) {
@@ -344,7 +497,11 @@ public class LLVMParser {
         }
     }
 
-
+    /**
+     * Generates the LLVM code for the If non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the If non-terminal expression.
+     */
     private String iF(ParseTree node) {
         // If -> IF { <Cond> } THEN <Code> <IfTail>
         ifCounter++;
@@ -363,6 +520,11 @@ public class LLVMParser {
                 ifTail;
     }
 
+    /**
+     * Generates the LLVM code for the IfTail non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the IfTail non-terminal expression.
+     */
     private String ifTail(ParseTree node) {
         // If -> END | ELSE <Code> END
         if (node.getChildren().size() == 3) {
@@ -381,6 +543,11 @@ public class LLVMParser {
         }
     }
 
+    /**
+     * Generates the LLVM code for the Cond non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Cond non-terminal expression.
+     */
     private String cond(ParseTree node) {
         // Cond → <SimpleCond> <Cond’>
         String updatedVars = updateVars();
@@ -389,6 +556,11 @@ public class LLVMParser {
         return updatedVars + simpleCond + condPrime;
     }
 
+    /**
+     * Generates the LLVM code for the Cond' non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Cond' non-terminal expression.
+     */
     private String condPrime(ParseTree node) {
         // <Cond’> → -> <Cond> | epsilon
         if (node.getChildren().size() == 2) {
@@ -411,6 +583,11 @@ public class LLVMParser {
         return "";
     }
 
+    /**
+     * Generates the LLVM code for the SimpleCond non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the SimpleCond non-terminal expression.
+     */
     private String simpleCond(ParseTree node) {
         // <SimpleCond> -> \| <Cond> \| | <ExprArith> <Comp> <ExprArith>
         if (look(node.getChildren().getFirst()).equals("|") && look(node.getChildren().get(2)).equals("|")) {
@@ -431,11 +608,21 @@ public class LLVMParser {
         }
     }
 
+    /**
+     * Returns the current condition variable.
+     * @param node The parse tree node to get the current condition variable from.
+     * @return The current condition variable.
+     */
     private String comp(ParseTree node) {
         // <Comp> -> == | <= | <
         return look(node.getChildren().getFirst());
     }
 
+    /**
+     * While non-terminal expression. We use "while" as "whilE" to avoid conflict with the reserved word.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the While non-terminal expression.
+     */
     private String whilE(ParseTree node) {
         //  <While> → WHILE { <Cond> } REPEAT <Code> END
         whileCounter++;
@@ -460,6 +647,11 @@ public class LLVMParser {
                 line(look(node.getChildren().get(6)) + ":");
     }
 
+    /**
+     * Generates the LLVM code for the Output non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Output non-terminal expression.
+     */
     private String output(ParseTree node) {
         // Output -> OUT([VarName])
         String updatedVars = updateVars();
@@ -467,6 +659,11 @@ public class LLVMParser {
         return updatedVars + line("call void @println(i32 " + getCurrentVariableVal(varName.substring(1)) + ")");
     }
 
+    /**
+     * Generates the LLVM code for the Input non-terminal expression.
+     * @param node The parse tree node to generate the LLVM code from.
+     * @return The LLVM code for the Input non-terminal expression.
+     */
     private String input(ParseTree node) {
         // <Input> → IN ( [VarName] )
         String varName = look(node.getChildren().get(2));

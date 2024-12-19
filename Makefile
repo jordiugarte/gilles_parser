@@ -42,12 +42,7 @@ jar:
 .PHONY: all build jar test
 
 test:
-	@java -jar ${JAR_NAME} $(if ${OUTPUT_TEX_FILE},-wt ${OUTPUT_TEX_FILE}) ${TEST_FILE}
-
-	@# If there was a .tex file specified, then generate the LaTeX and PDF files, else we're done!
-	@$(if ${OUTPUT_TEX_FILE}, $(PDFLATEX) -output-directory=$(MORE_DIR) $(OUTPUT_TEX_FILE) > /dev/null 2>&1)
-	@#@$(if ${OUTPUT_TEX_FILE}, mv $(MORE_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE})).pdf $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf)
-	@#$(if ${OUTPUT_TEX_FILE}, @echo "Parse tree saved to $(DOC_DIR)/$(basename $(notdir ${OUTPUT_TEX_FILE}))_part3.pdf")
+	@java -jar ${JAR_NAME} ${TEST_FILE}
 
 run-llvm: test
 	@# Extract the base name of the test file (without directory and extension)
