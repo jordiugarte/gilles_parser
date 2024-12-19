@@ -8,10 +8,11 @@ LET ThreeLoopGibberish BE
     WHILE {0 < b} REPEAT
       WHILE {0 < c} REPEAT
         d = a+b+c:
-        IF {d == 0} THEN
+        IF {100 < d} THEN
           OUT(d):
         ELSE $ ELSE is a VarName here because it is not a keyword in this part of the grammar
           OUT(b):
+	a = d:
         END:
       END:
       e = a+b:
@@ -20,7 +21,9 @@ LET ThreeLoopGibberish BE
       ELSE
           OUT(a):
       END:
+      OUT(a):
     END:
+    OUT(a):
   END:
   OUT(a):
 END

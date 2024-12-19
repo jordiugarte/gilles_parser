@@ -50,6 +50,7 @@ run-llvm: test
 	echo "Running LLVM assembly for $$BASENAME.ll..."; \
 	llvm-as ${DIST_DIR}/llvm_generated/$$BASENAME.ll -o=${DIST_DIR}/llvm_generated/$$BASENAME.bc && \
 	lli ${DIST_DIR}/llvm_generated/$$BASENAME.bc
+
 clean:
 	# Remove all .class and auto-generated files
 	rm -f ${SRC_DIR}/*.class
